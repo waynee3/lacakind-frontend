@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../theme/qios_color.dart';
+import 'package:lacakind_frontend/styles/color.styles.dart';
 
 class LabelTextField extends StatelessWidget {
   final String label;
@@ -32,7 +31,7 @@ class LabelTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: textTheme.bodyMedium?.copyWith(color: neutral900, fontWeight: FontWeight.w400),
+          style: textTheme.bodyMedium?.copyWith( fontWeight: FontWeight.w400),
         ),
         const SizedBox(height: 4),
         TextField(
@@ -45,7 +44,7 @@ class LabelTextField extends StatelessWidget {
           maxLines: maxLines,
           controller: controller,
           obscureText: obscureText ?? false,
-          style: textTheme.bodyMedium?.copyWith(color: neutral900, fontWeight: FontWeight.w400),
+          style: textTheme.bodyMedium?.copyWith( fontWeight: FontWeight.w400),
           onChanged: onChanged,
           enabled: enabled,
         ),
