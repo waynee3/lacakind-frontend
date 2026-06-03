@@ -116,5 +116,10 @@ app.*.symbols
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
 
+# Dart generated files
+**/*.freezed.dart
+**/*.g.dart
+**/*.graphql.dart
+
 # FVM Version Cache
 .fvm/
