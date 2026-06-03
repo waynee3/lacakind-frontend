@@ -1,0 +1,40 @@
+{
+  "configurations": [
+    {
+      "name": "Launch",
+      "type": "dart",
+      "request": "launch",
+      "flutterMode": "debug",
+      "args": [
+        "--dart-define-from-file=env.${input:env}.json",
+        "--${input:mode}"
+      ]
+    },
+  ],
+  "inputs": [
+    {
+      "id": "env",
+      "type": "pickString",
+      "options": [
+        {
+          "label": "Development",
+          "value": "dev"
+        },
+      ],
+      "default": "dev",
+      "description": "Select build environment"
+    },
+    {
+      "id": "mode",
+      "type": "pickString",
+      "options": [
+        {
+          "label": "Debug",
+          "value": "debug"
+        },
+      ],
+      "default": "debug",
+      "description": "Select mode"
+    },
+  ]
+}
