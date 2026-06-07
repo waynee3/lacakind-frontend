@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lacakind_frontend/routes/routes.dart';
 import 'package:lacakind_frontend/styles/theme_cubit.dart';
 import 'package:lacakind_frontend/widgets/label_text_field.dart';
 
@@ -92,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: () {
+                            DashboardRoute().go(context);
                             // context.read<LoginBloc>().add(const LoginEvent.loginSubmitted());
                           },
                           child: const Text("Login"),

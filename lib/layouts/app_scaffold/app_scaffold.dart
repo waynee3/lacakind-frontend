@@ -11,25 +11,33 @@ class AppScaffold extends StatelessWidget {
     final child = this.child;
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: baseWhite,
       appBar: AppBar(
-        backgroundColor: baseWhite,
-        elevation: 0,
+        elevation: 1,
         title: const Text(
           "LacakInd",
           style: TextStyle(
-            color: baseBlack,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      body: SizedBox.expand(child: Row(
-        children: [
-          const AppDrawer(),
-          Expanded(child: child),
-        ],
-      )),
+      body: SizedBox.expand(
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: double.infinity,
+              width: 280,
+              child: SingleChildScrollView(
+                child: const AppDrawer(),
+              ),
+            ),
+            VerticalDivider(width: 1, thickness: 1, color: neutral200),
+            Expanded(child: child),
+          ],
+        ),
+      ),
     );
   }
 }

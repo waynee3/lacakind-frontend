@@ -42,6 +42,17 @@ final lightTheme = ThemeData(
     color: neutral50,
     shadowColor: neutral900.withValues(alpha: 0.1),
   ),
+  checkboxTheme: CheckboxThemeData(
+    fillColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return baseBlack;
+      }
+       if (states.contains(WidgetState.disabled)) {
+        return baseWhite;
+      }
+      return null;
+    }),
+  ),
   iconTheme: const IconThemeData(color: Colors.black54),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
@@ -49,6 +60,7 @@ final lightTheme = ThemeData(
       foregroundColor: baseWhite,
     ),
   ),
+
   dividerColor: neutral600.withValues(alpha: 0.2),
   inputDecorationTheme: const InputDecorationTheme(
     labelStyle: TextStyle(color: baseBlack),
@@ -88,6 +100,10 @@ final lightTheme = ThemeData(
           }),
         ),
   ),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: baseWhite,
+    foregroundColor: baseBlack,
+  ),
 );
 
 final darkTheme = ThemeData(
@@ -101,6 +117,17 @@ final darkTheme = ThemeData(
     shadowColor: neutral900.withValues(alpha: 0.1),
   ),
   textTheme: _textTheme,
+  checkboxTheme: CheckboxThemeData(
+    fillColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return baseWhite;
+      }
+       if (states.contains(WidgetState.disabled)) {
+        return baseWhite;
+      }
+      return null;
+    }),
+  ),
   iconTheme: const IconThemeData(color: Colors.white60),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
@@ -145,6 +172,10 @@ final darkTheme = ThemeData(
             return BorderSide(color: baseWhite);
           }),
         ),
+  ),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: baseBlack,
+    foregroundColor: baseWhite,
   ),
 );
 
