@@ -1,8 +1,8 @@
-part of 'device_bloc.dart';
+part of 'device_list_bloc.dart';
 
 @freezed
-sealed class DeviceState with _$DeviceState {
-  const factory DeviceState.initial({
+sealed class DeviceListState with _$DeviceListState {
+  const factory DeviceListState.initial({
     @Default([]) List<DeviceModel> devices,
     @Default([]) List<String> selectedIds,
     @Default(false) bool isLoading,

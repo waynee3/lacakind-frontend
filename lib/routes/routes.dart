@@ -5,8 +5,8 @@ import 'package:lacakind_frontend/layouts/app_scaffold/app_scaffold.dart';
 import 'package:lacakind_frontend/screens/client/clients_screen.dart';
 import 'package:lacakind_frontend/screens/contract/contracts_screen.dart';
 import 'package:lacakind_frontend/screens/dashboard/dashboard_screen.dart';
-import 'package:lacakind_frontend/screens/device/bloc/device_bloc.dart';
-import 'package:lacakind_frontend/screens/device/device_screen.dart';
+import 'package:lacakind_frontend/screens/device/device_list/bloc/device_list_bloc.dart';
+import 'package:lacakind_frontend/screens/device/device_list/device_list_screen.dart';
 import 'package:lacakind_frontend/screens/lifecycle/lifecycle_log_screen.dart';
 import 'package:lacakind_frontend/screens/login/bloc/login_bloc.dart';
 import 'package:lacakind_frontend/screens/login/login_screen.dart';
@@ -30,7 +30,7 @@ class LoginRoute extends GoRouteData with $LoginRoute {
 @TypedShellRoute<AppShellRoute>(
   routes: [
     TypedGoRoute<DashboardRoute>(path: '/dashboard'),
-    TypedGoRoute<DeviceRoute>(path: '/device'),
+    TypedGoRoute<DeviceListRoute>(path: '/device-list'),
     TypedGoRoute<ClientsRoute>(path: '/clients'),
     TypedGoRoute<LifecycleLogRoute>(path: '/lifecycle-log'),
     TypedGoRoute<ContractsRoute>(path: '/contracts'),
@@ -55,13 +55,13 @@ class DashboardRoute extends GoRouteData with $DashboardRoute {
 }
 
 @immutable
-class DeviceRoute extends GoRouteData with $DeviceRoute {
+class DeviceListRoute extends GoRouteData with $DeviceListRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
       child: BlocProvider(
-        create: (_) => DeviceBloc()..add(const DeviceEvent.started()),
-        child: const DeviceScreen(),
+        create: (_) => DeviceListBloc()..add(const DeviceListEvent.started()),
+        child: const DeviceListScreen(),
       ),
     );
   }

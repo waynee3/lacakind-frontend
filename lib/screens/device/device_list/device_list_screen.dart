@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lacakind_frontend/extensions/text_ext.dart';
-import 'package:lacakind_frontend/screens/device/bloc/device_bloc.dart';
-import 'package:lacakind_frontend/screens/device/bulk_lifecycle_dialog.dart';
+import 'package:lacakind_frontend/screens/device/device_list/bloc/device_list_bloc.dart';
+import 'package:lacakind_frontend/screens/device/device_list/widget/bulk_lifecycle_dialog.dart';
 import 'package:lacakind_frontend/styles/color.styles.dart';
 
-class DeviceScreen extends StatefulWidget {
-  const DeviceScreen({super.key});
+class DeviceListScreen extends StatefulWidget {
+  const DeviceListScreen({super.key});
 
   @override
-  State<DeviceScreen> createState() => _DeviceScreenState();
+  State<DeviceListScreen> createState() => _DeviceListScreenState();
 }
 
-class _DeviceScreenState extends State<DeviceScreen> {
+class _DeviceListScreenState extends State<DeviceListScreen> {
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    context.read<DeviceBloc>().add(const DeviceEvent.started());
+    context.read<DeviceListBloc>().add(const DeviceListEvent.started());
   }
 
   @override
@@ -43,8 +43,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                 suffixIcon: Icon(Icons.search),
               ),
               onSubmitted: (value) {
-                context.read<DeviceBloc>().add(
-                  DeviceEvent.onSearch(value.trim()),
+                context.read<DeviceListBloc>().add(
+                  DeviceListEvent.onSearch(value.trim()),
                 );
               },
             ),
@@ -57,7 +57,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: neutral300),
                 ),
-                child: BlocBuilder<DeviceBloc, DeviceState>(
+                child: BlocBuilder<DeviceListBloc, DeviceListState>(
                   builder: (context, state) {
                     final isAllSelected =
                         state.devices.isNotEmpty &&
@@ -89,8 +89,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                                       ),
                                     );
                                     if (result == true && context.mounted) {
-                                      context.read<DeviceBloc>().add(
-                                        const DeviceEvent.started(),
+                                      context.read<DeviceListBloc>().add(
+                                        const DeviceListEvent.started(),
                                       );
                                     }
                                   },
@@ -121,8 +121,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                                       Checkbox(
                                         value: isAllSelected,
                                         onChanged: (_) => context
-                                            .read<DeviceBloc>()
-                                            .add(const DeviceEvent.selectAll()),
+                                            .read<DeviceListBloc>()
+                                            .add(const DeviceListEvent.selectAll()),
                                       ),
                                       const SizedBox(width: 4),
                                       const Text('Select all'),
@@ -175,7 +175,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
   }
 
-  Widget _buildList(BuildContext context, DeviceState state) {
+  Widget _buildList(BuildContext context, DeviceListState state) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -209,8 +209,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   alignment: Alignment.centerLeft,
                   child: Checkbox(
                     value: isSelected,
-                    onChanged: (_) => context.read<DeviceBloc>().add(
-                      DeviceEvent.selectDevice(device.id),
+                    onChanged: (_) => context.read<DeviceListBloc>().add(
+                      DeviceListEvent.selectDevice(device.id),
                     ),
                   ),
                 ),

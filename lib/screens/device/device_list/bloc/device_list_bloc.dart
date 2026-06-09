@@ -3,13 +3,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lacakind_frontend/container.dart';
 import 'package:lacakind_frontend/data/models/device_model.dart';
 
-part 'device_event.dart';
-part 'device_state.dart';
+part 'device_list_event.dart';
+part 'device_list_state.dart';
 part 'device_bloc.freezed.dart';
 
-class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
-  DeviceBloc() : super(const DeviceState.initial()) {
-    on<DeviceEvent>((event, emit) async {
+class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
+  DeviceListBloc() : super(const DeviceListState.initial()) {
+    on<DeviceListEvent>((event, emit) async {
       switch (event) {
         case _Started():
           await _onStarted(event, emit);
@@ -29,7 +29,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     });
   }
 
-  Future<void> _onStarted(_Started event, Emitter<DeviceState> emit) async {
+  Future<void> _onStarted(_Started event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
     final (data, error) = await deviceRepo.getDevices(
       serialNumber: event.serialNumber,
@@ -47,7 +47,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  Future<void> _onSearched(_Searched event, Emitter<DeviceState> emit) async {
+  Future<void> _onSearched(_Searched event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
     final (data, error) = await deviceRepo.getDevices(
       serialNumber: event.serialNumber,
@@ -61,13 +61,13 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  void _onSelectedAll(_SelectedAll event, Emitter<DeviceState> emit) {
+  void _onSelectedAll(_SelectedAll event, Emitter<DeviceListState> emit) {
     final allIds = state.devices.map((d) => d.id).toList();
     final allSelected = allIds.every((id) => state.selectedIds.contains(id));
     emit(state.copyWith(selectedIds: allSelected ? [] : allIds));
   }
 
-  void _onSelectedDevice(_SelectedDevice event, Emitter<DeviceState> emit) {
+  void _onSelectedDevice(_SelectedDevice event, Emitter<DeviceListState> emit) {
     final updated = List<String>.from(state.selectedIds);
     if (updated.contains(event.id)) {
       updated.remove(event.id);
@@ -77,7 +77,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     emit(state.copyWith(selectedIds: updated));
   }
 
-  Future<void> _onAdded(_Added event, Emitter<DeviceState> emit) async {
+  Future<void> _onAdded(_Added event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
     final error = await deviceRepo.addDevice(event.data);
     if (error != null) {
@@ -94,7 +94,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  Future<void> _onUpdated(_Updated event, Emitter<DeviceState> emit) async {
+  Future<void> _onUpdated(_Updated event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
     final error = await deviceRepo.updateDevice(event.id, event.data);
     if (error != null) {
@@ -111,7 +111,7 @@ class DeviceBloc extends Bloc<DeviceEvent, DeviceState> {
     }
   }
 
-  Future<void> _onDeleted(_Deleted event, Emitter<DeviceState> emit) async {
+  Future<void> _onDeleted(_Deleted event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
     final error = await deviceRepo.deleteDevice(event.id);
     if (error != null) {

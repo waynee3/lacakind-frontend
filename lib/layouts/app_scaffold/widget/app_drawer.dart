@@ -11,7 +11,7 @@ class AppDrawer extends StatelessWidget {
     final String current = GoRouterState.of(context).uri.toString();
 
     final dashboardLoc = DashboardRoute().location;
-    final deviceLoc = DeviceRoute().location;
+    final deviceLoc = DeviceListRoute().location;
     final clientsLoc = ClientsRoute().location;
     final contractsLoc = ContractsRoute().location;
     final lifecycleLogLoc = LifecycleLogRoute().location;
@@ -31,7 +31,7 @@ class AppDrawer extends StatelessWidget {
           icon: Icons.dashboard_outlined,
           iconActive: Icons.dashboard,
           location: deviceLoc,
-          onClick: () => DeviceRoute().go(context),
+          onClick: () => DeviceListRoute().go(context),
           currentLocation: current,
         ),
         NavigationItem(
