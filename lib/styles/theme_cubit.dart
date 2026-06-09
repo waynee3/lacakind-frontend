@@ -33,6 +33,7 @@ class ThemeCubit extends Cubit<ThemeMode> {
 }
 
 final lightTheme = ThemeData(
+  fontFamily: "DM Sans",
   useMaterial3: true,
   brightness: Brightness.light,
   canvasColor: baseWhite,
@@ -107,6 +108,7 @@ final lightTheme = ThemeData(
 );
 
 final darkTheme = ThemeData(
+  fontFamily: "DM Sans",
   useMaterial3: true,
   brightness: Brightness.dark,
   canvasColor: baseBlack,
