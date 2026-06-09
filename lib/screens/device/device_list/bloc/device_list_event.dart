@@ -13,6 +13,13 @@ sealed class DeviceListEvent with _$DeviceListEvent {
   const factory DeviceListEvent.selectAll() = _SelectedAll;
   const factory DeviceListEvent.selectDevice(String id) = _SelectedDevice;
   const factory DeviceListEvent.addDevice(Map<String, dynamic> data) = _Added;
-  const factory DeviceListEvent.updateDevice(String id, Map<String, dynamic> data) = _Updated;
+  const factory DeviceListEvent.updateDevice(
+    String id,
+    Map<String, dynamic> data,
+  ) = _Updated;
   const factory DeviceListEvent.deleteDevice(String id) = _Deleted;
+  const factory DeviceListEvent.importDevices({
+    required String filePath,
+    required String fileName,
+  }) = _Imported;
 }

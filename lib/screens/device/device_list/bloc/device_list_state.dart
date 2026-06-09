@@ -9,5 +9,6 @@ sealed class DeviceListState with _$DeviceListState {
     @Default(false) bool isSuccess,
     @Default('') String errorMessage,
     @Default('') String successMessage,
+    @Default([]) List<String> importErrors,
   }) = _Initial;
 }

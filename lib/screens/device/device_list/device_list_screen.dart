@@ -1,9 +1,12 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lacakind_frontend/extensions/text_ext.dart';
+import 'package:lacakind_frontend/routes/routes.dart';
 import 'package:lacakind_frontend/screens/device/device_list/bloc/device_list_bloc.dart';
 import 'package:lacakind_frontend/screens/device/device_list/widget/bulk_lifecycle_dialog.dart';
 import 'package:lacakind_frontend/styles/color.styles.dart';
+import 'package:lacakind_frontend/widgets/status_widget.dart';
 
 class DeviceListScreen extends StatefulWidget {
   const DeviceListScreen({super.key});
@@ -27,149 +30,209 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     super.dispose();
   }
 
+  Future<void> _handleImport(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.path == null) return;
+    if (context.mounted) {
+      context.read<DeviceListBloc>().add(
+            DeviceListEvent.importDevices(
+              filePath: file.path!,
+              fileName: file.name,
+            ));
+    }
+  }
+
+  void _showImportErrorsDialog(BuildContext ctx, List<String> errors) {
+    showDialog<void>(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        title: const Text('Import Row Errors'),
+        content: SizedBox(
+          width: 480,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: errors.length,
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 16, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(errors[i])),
+                ],
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Material(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: "Search by Serial Number",
-                suffixIcon: Icon(Icons.search),
+    return BlocListener<DeviceListBloc, DeviceListState>(
+      listener: (context, state) {
+        if (state.isSuccess && state.successMessage.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.successMessage),
+            backgroundColor: Colors.green.shade700,
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+        if (state.errorMessage.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.errorMessage),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+        if (state.importErrors.isNotEmpty) {
+          _showImportErrorsDialog(context, state.importErrors);
+        }
+      },
+      child: Material(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              // ── Top bar ─────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Search by Serial Number',
+                        suffixIcon: Icon(Icons.search),
+                      ),
+                      onSubmitted: (value) => context
+                          .read<DeviceListBloc>()
+                          .add(DeviceListEvent.onSearch(value.trim())),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => _handleImport(context),
+                    icon: const Icon(Icons.upload_file_outlined, size: 18),
+                    label: const Text('Import CSV'),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton.icon(
+                    onPressed: () => DeviceNewRoute().go(context),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add Device'),
+                  ),
+                ],
               ),
-              onSubmitted: (value) {
-                context.read<DeviceListBloc>().add(
-                  DeviceListEvent.onSearch(value.trim()),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: neutral300),
-                ),
-                child: BlocBuilder<DeviceListBloc, DeviceListState>(
-                  builder: (context, state) {
-                    final isAllSelected =
-                        state.devices.isNotEmpty &&
-                        state.devices.every(
-                          (d) => state.selectedIds.contains(d.id),
-                        );
+              const SizedBox(height: 12),
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (state.selectedIds.isNotEmpty)
+              // ── Table container ──────────────────────────────
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: neutral300),
+                  ),
+                  child: BlocBuilder<DeviceListBloc, DeviceListState>(
+                    builder: (context, state) {
+                      final isAllSelected = state.devices.isNotEmpty &&
+                          state.devices
+                              .every((d) => state.selectedIds.contains(d.id));
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Bulk action bar
+                          if (state.selectedIds.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '(${state.selectedIds.length}/${state.devices.length}) selected',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  OutlinedButton.icon(
+                                    onPressed: () async {
+                                      final result = await showDialog<bool>(
+                                        context: context,
+                                        builder: (_) => BulkLifecycleDialog(
+                                            selectedIds: state.selectedIds),
+                                      );
+                                      if (result == true && context.mounted) {
+                                        context.read<DeviceListBloc>().add(
+                                            const DeviceListEvent.started());
+                                      }
+                                    },
+                                    icon: const Icon(Icons.settings, size: 16),
+                                    label: Text(
+                                      'Bulk Lifecycle Event',
+                                      style: textTheme.bodyLarge?.medium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // Header row
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4),
                             child: Row(
                               children: [
-                                Text(
-                                  '(${state.selectedIds.length}/${state.devices.length}) selected',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                OutlinedButton(
-                                  onPressed: () async {
-                                    final result = await showDialog<bool>(
-                                      context: context,
-                                      builder: (_) => BulkLifecycleDialog(
-                                        selectedIds: state.selectedIds,
-                                      ),
-                                    );
-                                    if (result == true && context.mounted) {
-                                      context.read<DeviceListBloc>().add(
-                                        const DeviceListEvent.started(),
-                                      );
-                                    }
-                                  },
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.settings, size: 16),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "Bulk Lifecycle Event",
-                                        style: textTheme.bodyLarge?.medium,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        // Header row
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
+                                Expanded(
                                   child: Row(
                                     children: [
                                       Checkbox(
                                         value: isAllSelected,
-                                        onChanged: (_) => context
-                                            .read<DeviceListBloc>()
-                                            .add(const DeviceListEvent.selectAll()),
+                                        onChanged: (_) =>
+                                            context.read<DeviceListBloc>().add(
+                                                const DeviceListEvent
+                                                    .selectAll()),
                                       ),
                                       const SizedBox(width: 4),
                                       const Text('Select all'),
                                     ],
                                   ),
                                 ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Serial Number',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Model',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Status',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Location',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
+                                _HeaderCell('Serial Number'),
+                                _HeaderCell('Model'),
+                                _HeaderCell('Status'),
+                                _HeaderCell('Location'),
+                                const SizedBox(width: 48), // edit action col
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Expanded(child: _buildList(context, state)),
-                      ],
-                    );
-                  },
+                          const SizedBox(height: 12),
+
+                          Expanded(child: _buildList(context, state)),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -179,50 +242,80 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage.isNotEmpty) {
-      return Center(
-        child: Text(
-          state.errorMessage,
-          style: const TextStyle(color: Colors.red),
-        ),
-      );
-    }
     if (state.devices.isEmpty) {
-      return const Center(child: Text("No devices found."));
+      return const Center(child: Text('No devices found.'));
     }
+
     return ListView.separated(
       itemCount: state.devices.length,
       separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final device = state.devices[index];
         final isSelected = state.selectedIds.contains(device.id);
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: neutral300),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Checkbox(
-                    value: isSelected,
-                    onChanged: (_) => context.read<DeviceListBloc>().add(
-                      DeviceListEvent.selectDevice(device.id),
+
+        return InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => DeviceDetailRoute(id: device.id).go(context),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: isSelected ? Colors.black54 : neutral300),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Checkbox(
+                      value: isSelected,
+                      onChanged: (_) => context.read<DeviceListBloc>().add(
+                            DeviceListEvent.selectDevice(device.id)),
                     ),
                   ),
                 ),
-              ),
-              Expanded(flex: 2, child: Text(device.serialNumber)),
-              Expanded(flex: 2, child: Text(device.modelType ?? '-')),
-              Expanded(flex: 2, child: Text(device.status ?? '-')),
-              Expanded(flex: 2, child: Text(device.currentLocation ?? '-')),
-            ],
+                Expanded(flex: 2, child: Text(device.serialNumber)),
+                Expanded(flex: 2, child: Text(device.modelType ?? '—')),
+                Expanded(
+                  flex: 2,
+                  child: device.status != null
+                      ? StatusChip(status: device.status!)
+                      : const Text('—'),
+                ),
+                Expanded(
+                    flex: 2,
+                    child: Text(device.currentLocation ?? '—')),
+                // Edit icon
+                SizedBox(
+                  width: 48,
+                  child: IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    tooltip: 'Edit',
+                    onPressed: () =>
+                        DeviceEditRoute(id: device.id).go(context),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+class _HeaderCell extends StatelessWidget {
+  final String text;
+  const _HeaderCell(this.text);
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        flex: 2,
+        child: Text(text,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+      );
 }

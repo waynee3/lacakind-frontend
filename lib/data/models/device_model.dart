@@ -1,10 +1,11 @@
+import 'package:lacakind_frontend/data/enums/device_status.dart';
 import 'package:lacakind_frontend/data/models/lifecycle_event_model.dart';
 
 class DeviceModel {
   final String id;
   final String serialNumber;
   final String? modelType;
-  final String? status;
+  final DeviceStatus? status;
   final String? currentLocation;
   final String? supplier;
   final String? batchNumber;
@@ -47,7 +48,7 @@ class DeviceModel {
         id: json['_id'] ?? json['id'] ?? '',
         serialNumber: json['serialNumber'] ?? '',
         modelType: json['modelType'],
-        status: json['status'],
+        status: DeviceStatus.fromValue(json['status']),
         currentLocation: json['currentLocation'],
         supplier: json['supplier'],
         batchNumber: json['batchNumber'],
@@ -73,7 +74,7 @@ class DeviceModel {
   Map<String, dynamic> toJson() => {
         'serialNumber': serialNumber,
         if (modelType != null) 'modelType': modelType,
-        if (status != null) 'status': status,
+        if (status != null) 'status': status!.value,
         if (currentLocation != null) 'currentLocation': currentLocation,
         if (supplier != null) 'supplier': supplier,
         if (batchNumber != null) 'batchNumber': batchNumber,
