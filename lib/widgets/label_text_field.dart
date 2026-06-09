@@ -4,6 +4,7 @@ import 'package:lacakind_frontend/styles/color.styles.dart';
 class LabelTextField extends StatelessWidget {
   final String label;
   final String? hintText;
+  final Widget? prefixIcon;
   final Widget? suffixIcon;
   final TextEditingController? controller;
   final bool? obscureText;
@@ -15,6 +16,7 @@ class LabelTextField extends StatelessWidget {
     super.key,
     required this.label,
     this.hintText,
+    this.prefixIcon,
     this.suffixIcon,
     this.controller,
     this.obscureText,
@@ -37,6 +39,7 @@ class LabelTextField extends StatelessWidget {
         TextField(
           decoration: InputDecoration(
             hintText: hintText,
+            prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             border: OutlineInputBorder(borderSide: BorderSide(color: neutral200)),
             hintStyle: textTheme.bodyMedium?.copyWith(color: neutral500, fontWeight: FontWeight.w400),

@@ -41,9 +41,22 @@ class DeviceRepository {
     return error;
   }
 
-  Future<String?> deleteDevice(String id) async { 
+  Future<String?> deleteDevice(String id) async {
     final (_, error) = await ApiClient.safeCall(
       () => _dio.delete('/devices/$id'),
+    );
+    return error;
+  }
+
+  Future<String?> bulkLifecycleEvent(
+    List<String> deviceIds,
+    Map<String, dynamic> data,
+  ) async {
+    final (_, error) = await ApiClient.safeCall(
+      () => _dio.post('/devices/bulk/lifecycle', data: {
+        'deviceIds': deviceIds,
+        ...data,
+      }),
     );
     return error;
   }

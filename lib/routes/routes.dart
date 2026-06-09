@@ -5,6 +5,7 @@ import 'package:lacakind_frontend/layouts/app_scaffold/app_scaffold.dart';
 import 'package:lacakind_frontend/screens/client/clients_screen.dart';
 import 'package:lacakind_frontend/screens/contract/contracts_screen.dart';
 import 'package:lacakind_frontend/screens/dashboard/dashboard_screen.dart';
+import 'package:lacakind_frontend/screens/device/bloc/device_bloc.dart';
 import 'package:lacakind_frontend/screens/device/device_screen.dart';
 import 'package:lacakind_frontend/screens/lifecycle/lifecycle_log_screen.dart';
 import 'package:lacakind_frontend/screens/login/bloc/login_bloc.dart';
@@ -57,7 +58,12 @@ class DashboardRoute extends GoRouteData with $DashboardRoute {
 class DeviceRoute extends GoRouteData with $DeviceRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage(child: DeviceScreen());
+    return NoTransitionPage(
+      child: BlocProvider(
+        create: (_) => DeviceBloc()..add(const DeviceEvent.started()),
+        child: const DeviceScreen(),
+      ),
+    );
   }
 }
 

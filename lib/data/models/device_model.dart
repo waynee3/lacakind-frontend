@@ -44,7 +44,7 @@ class DeviceModel {
   });
 
   factory DeviceModel.fromJson(Map<String, dynamic> json) => DeviceModel(
-        id: json['id'] ?? '',
+        id: json['_id'] ?? json['id'] ?? '',
         serialNumber: json['serialNumber'] ?? '',
         modelType: json['modelType'],
         status: json['status'],

@@ -48,7 +48,7 @@ final lightTheme = ThemeData(
       if (states.contains(WidgetState.selected)) {
         return baseBlack;
       }
-       if (states.contains(WidgetState.disabled)) {
+      if (states.contains(WidgetState.disabled)) {
         return baseWhite;
       }
       return null;
@@ -61,7 +61,6 @@ final lightTheme = ThemeData(
       foregroundColor: baseWhite,
     ),
   ),
-
   dividerColor: neutral600.withValues(alpha: 0.2),
   inputDecorationTheme: const InputDecorationTheme(
     labelStyle: TextStyle(color: baseBlack),
@@ -73,6 +72,7 @@ final lightTheme = ThemeData(
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: baseBlack, width: 2),
     ),
+    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
   ),
   textTheme: _textTheme,
   filledButtonTheme: FilledButtonThemeData(
@@ -87,8 +87,8 @@ final lightTheme = ThemeData(
   outlinedButtonTheme: OutlinedButtonThemeData(
     style:
         OutlinedButton.styleFrom(
-          backgroundColor: baseBlack,
-          foregroundColor: baseWhite,
+          side: BorderSide(color: baseBlack),
+          foregroundColor: baseBlack,
           disabledBackgroundColor: neutral200,
           disabledForegroundColor: neutral800,
           textStyle: _textTheme.bodyLarge?.medium,
@@ -101,9 +101,43 @@ final lightTheme = ThemeData(
           }),
         ),
   ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      foregroundColor: baseBlack,
+      disabledForegroundColor: neutral600,
+      textStyle: _textTheme.bodyLarge?.medium,
+    ),
+  ),
   appBarTheme: const AppBarTheme(
     backgroundColor: baseWhite,
     foregroundColor: baseBlack,
+  ),
+  primaryIconTheme: const IconThemeData(color: baseBlack),
+  dialogTheme: DialogThemeData(
+    backgroundColor: baseWhite,
+    titleTextStyle: _textTheme.headlineMedium?.bold,
+    contentTextStyle: _textTheme.bodyMedium,
+    shadowColor: neutral200,
+  ),
+  dropdownMenuTheme: DropdownMenuThemeData(
+    textStyle: _textTheme.bodyMedium?.regular?.copyWith(color: baseBlack),
+    inputDecorationTheme: const InputDecorationTheme(
+      labelStyle: TextStyle(color: baseBlack),
+      hintStyle: TextStyle(color: neutral600),
+      border: OutlineInputBorder(),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: neutral600),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: baseBlack, width: 2),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    ),
+    menuStyle: MenuStyle(
+      backgroundColor: WidgetStateProperty.all(baseWhite),
+      elevation: WidgetStateProperty.all(4),
+      shadowColor: WidgetStateProperty.all(baseBlack),
+    ),
   ),
 );
 
@@ -124,7 +158,7 @@ final darkTheme = ThemeData(
       if (states.contains(WidgetState.selected)) {
         return baseWhite;
       }
-       if (states.contains(WidgetState.disabled)) {
+      if (states.contains(WidgetState.disabled)) {
         return baseWhite;
       }
       return null;
@@ -148,6 +182,7 @@ final darkTheme = ThemeData(
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(color: neutral600, width: 2),
     ),
+    fillColor: baseWhite,
   ),
   filledButtonTheme: FilledButtonThemeData(
     style: FilledButton.styleFrom(
@@ -161,8 +196,8 @@ final darkTheme = ThemeData(
   outlinedButtonTheme: OutlinedButtonThemeData(
     style:
         OutlinedButton.styleFrom(
-          backgroundColor: baseWhite,
-          foregroundColor: baseBlack,
+          side: BorderSide(color: baseWhite),
+          foregroundColor: baseWhite,
           disabledBackgroundColor: neutral200,
           disabledForegroundColor: neutral800,
           textStyle: _textTheme.bodyLarge?.medium,
@@ -175,9 +210,43 @@ final darkTheme = ThemeData(
           }),
         ),
   ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      foregroundColor: baseWhite,
+      disabledForegroundColor: neutral600,
+      textStyle: _textTheme.bodyLarge?.medium,
+    ),
+  ),
   appBarTheme: const AppBarTheme(
     backgroundColor: baseBlack,
     foregroundColor: baseWhite,
+  ),
+  primaryIconTheme: const IconThemeData(color: baseWhite),
+  dialogTheme: DialogThemeData(
+    backgroundColor: baseBlack,
+    titleTextStyle: _textTheme.headlineMedium?.bold,
+    contentTextStyle: _textTheme.bodyMedium,
+    shadowColor: neutral600,
+  ),
+  dropdownMenuTheme: DropdownMenuThemeData(
+    textStyle: _textTheme.bodyMedium?.regular?.copyWith(color: baseWhite),
+    inputDecorationTheme: const InputDecorationTheme(
+      labelStyle: TextStyle(color: baseWhite),
+      hintStyle: TextStyle(color: neutral200),
+      border: OutlineInputBorder(),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: neutral200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: baseWhite, width: 2),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    ),
+    menuStyle: MenuStyle(
+      backgroundColor: WidgetStateProperty.all(baseWhite),
+      elevation: WidgetStateProperty.all(4),
+      shadowColor: WidgetStateProperty.all(baseWhite),
+    ),
   ),
 );
 
