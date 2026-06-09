@@ -4,21 +4,16 @@ import 'package:lacakind_frontend/core/token_storage.dart';
 class AuthRepository {
   final _dio = ApiClient.dio;
 
-  Future<String> login(String email, String password) async {
-    final res = await _dio.post('/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
-    final token = res.data['token'] as String;
-    await TokenStorage.save(token);
-    return token;
-  }
-
-  Future<void> register(String email, String password) async {
-    await _dio.post('/auth/register', data: {
-      'email': email,
-      'password': password,
-    });
+  Future<String?> login(String email, String password) async {
+    if (email.isEmpty || password.isEmpty) {
+      return 'Email and password are required';
+    }
+    final (res, error) = await ApiClient.safeCall(
+      () => _dio.post('/auth/login', data: {'email': email, 'password': password}),
+    );
+    if (error != null) return error;
+    await TokenStorage.save(res!.data['token']);
+    return null;
   }
 
   Future<void> logout() => TokenStorage.clear();

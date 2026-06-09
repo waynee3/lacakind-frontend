@@ -33,4 +33,20 @@ class ApiClient {
   }
 
   static Dio get dio => _dio;
+
+  // Returns (data, errorMessage)
+  // data is null if error, errorMessage is null if success
+  static Future<(T?, String?)> safeCall<T>(Future<T> Function() call) async {
+    try {
+      final data = await call();
+      return (data, null);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? e.response!.data['message'] ?? 'Request failed'
+          : e.message ?? 'Request failed';
+      return (null, message as String);
+    } catch (e) {
+      return (null, e.toString());
+    }
+  }
 }
