@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:lacakind_frontend/core/api_client.dart';
 import 'package:lacakind_frontend/data/models/device_model.dart';
 
@@ -13,10 +14,10 @@ class DeviceRepository {
   }) async {
     final (res, error) = await ApiClient.safeCall(
       () => _dio.get('/devices', queryParameters: {
-        if (serialNumber != null) 'serialNumber': serialNumber,
-        if (status != null) 'status': status,
-        if (modelType != null) 'modelType': modelType,
-        if (location != null) 'location': location,
+        'serialNumber': ?serialNumber,
+        'status': ?status,
+        'modelType': ?modelType,
+        'location': ?location,
         'page': page,
       }),
     );
@@ -25,6 +26,14 @@ class DeviceRepository {
         .map((e) => DeviceModel.fromJson(e))
         .toList();
     return (devices, null);
+  }
+
+  Future<(DeviceModel?, String?)> getDeviceById(String id) async {
+    final (res, error) = await ApiClient.safeCall(
+      () => _dio.get('/devices/$id'),
+    );
+    if (error != null) return (null, error);
+    return (DeviceModel.fromJson(res!.data), null);
   }
 
   Future<String?> addDevice(Map<String, dynamic> data) async {
@@ -59,5 +68,32 @@ class DeviceRepository {
       }),
     );
     return error;
+  }
+
+  /// Imports devices from a CSV file (multipart/form-data).
+  /// Returns (successCount, errors, fatalError).
+  Future<({int? inserted, List<String> errors, String? fatalError})>
+      importDevices(String filePath, String fileName) async {
+    try {
+      final formData = FormData.fromMap({
+        'csvFile': await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+      final (res, error) = await ApiClient.safeCall(
+        () => _dio.post('/utilities/bulk-import', data: formData),
+      );
+      if (error != null) return (inserted: null, errors: [error], fatalError: error);
+      final data = res!.data as Map<String, dynamic>;
+      final rawErrors = data['errors'];
+      final errors = rawErrors is List
+          ? List<String>.from(rawErrors.map((e) => e.toString()))
+          : <String>[];
+      return (
+        inserted: data['successfulRecords'] as int?,
+        errors: errors,
+        fatalError: null,
+      );
+    } catch (e) {
+      return (inserted: null, errors: [e.toString()], fatalError: e.toString());
+    }
   }
 }

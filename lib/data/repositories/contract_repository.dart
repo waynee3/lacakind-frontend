@@ -6,8 +6,8 @@ class ContractRepository {
 
   Future<List<ContractModel>> getContracts({String? clientId, String? status}) async {
     final res = await _dio.get('/contracts', queryParameters: {
-      if (clientId != null) 'clientId': clientId,
-      if (status != null) 'status': status,
+      'clientId': ?clientId,
+      'status': ?status,
     });
     return (res.data as List).map((e) => ContractModel.fromJson(e)).toList();
   }

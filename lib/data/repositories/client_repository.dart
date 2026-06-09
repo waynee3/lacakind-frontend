@@ -6,7 +6,7 @@ class ClientRepository {
 
   Future<List<ClientModel>> getClients({String? search}) async {
     final res = await _dio.get('/clients', queryParameters: {
-      if (search != null) 'search': search,
+      'search': ?search,
     });
     return (res.data as List).map((e) => ClientModel.fromJson(e)).toList();
   }
