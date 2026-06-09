@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lacakind_frontend/layouts/app_scaffold/app_scaffold.dart';
 import 'package:lacakind_frontend/screens/client/clients_screen.dart';
@@ -6,17 +7,21 @@ import 'package:lacakind_frontend/screens/contract/contracts_screen.dart';
 import 'package:lacakind_frontend/screens/dashboard/dashboard_screen.dart';
 import 'package:lacakind_frontend/screens/device/device_screen.dart';
 import 'package:lacakind_frontend/screens/lifecycle/lifecycle_log_screen.dart';
+import 'package:lacakind_frontend/screens/login/bloc/login_bloc.dart';
 import 'package:lacakind_frontend/screens/login/login_screen.dart';
 
 part 'routes.g.dart';
 
-@TypedGoRoute<LoginRoute>(path: "/login")
+@TypedGoRoute<LoginRoute>(path: '/login')
 @immutable
 class LoginRoute extends GoRouteData with $LoginRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
-      child: LoginScreen(),
+      child: BlocProvider(
+        create: (_) => LoginBloc(),
+        child: const LoginScreen(),
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lacakind_frontend/routes/routes.dart';
+import 'package:lacakind_frontend/screens/login/bloc/login_bloc.dart';
 import 'package:lacakind_frontend/styles/theme_cubit.dart';
 import 'package:lacakind_frontend/widgets/label_text_field.dart';
 
@@ -24,10 +24,14 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController = TextEditingController();
 
     _emailController.addListener(() {
-      // context.read<LoginBloc>().add(LoginEvent.emailChanged(_emailController.text));
+      context.read<LoginBloc>().add(
+        LoginEvent.emailChanged(_emailController.text),
+      );
     });
     _passwordController.addListener(() {
-      // context.read<LoginBloc>().add(LoginEvent.passwordChanged(_passwordController.text));
+      context.read<LoginBloc>().add(
+        LoginEvent.passwordChanged(_passwordController.text),
+      );
     });
   }
 
@@ -69,23 +73,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                       ),
                       const SizedBox(height: 12),
-                      LabelTextField(
-                        label: "Password",
-                        hintText: "Masukkan password",
-                        controller: _passwordController,
-                        obscureText: true,
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            // const event = LoginEvent.obscurePasswordToggled();
-                            // context.read<LoginBloc>().add(event);
-                          },
-                          icon: Icon(
-                            // obscurePassword
-                            //     ? Icons.visibility_outlined
-                            // :
-                            Icons.visibility_off_outlined,
-                          ),
-                        ),
+                      BlocBuilder<LoginBloc, LoginState>(
+                        buildWhen: (previous, current) => previous.obscurePassword != current.obscurePassword,
+                        builder: (context, state) {
+                          final obscurePassword = state.obscurePassword;
+                          return LabelTextField(
+                            label: "Password",
+                            hintText: "Masukkan password",
+                            controller: _passwordController,
+                            obscureText: obscurePassword,
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                const event =
+                                    LoginEvent.obscurePasswordToggled();
+                                context.read<LoginBloc>().add(event);
+                              },
+                              icon: Icon(
+                                obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
@@ -93,8 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: () {
-                            DashboardRoute().go(context);
-                            // context.read<LoginBloc>().add(const LoginEvent.loginSubmitted());
+                            context.read<LoginBloc>().add(const LoginEvent.loginSubmitted());
                           },
                           child: const Text("Login"),
                         ),
