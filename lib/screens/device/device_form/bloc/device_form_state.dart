@@ -17,6 +17,7 @@ sealed class DeviceFormState with _$DeviceFormState {
     @Default(false) bool isLoading,
     @Default(false) bool isSuccess,
     @Default('') String errorMessage,
+    DeviceModel? savedDevice,
   }) = _Initial;
 }
  

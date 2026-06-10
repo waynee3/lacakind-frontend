@@ -3,7 +3,7 @@ part of 'device_form_bloc.dart';
 @freezed
 sealed class DeviceFormEvent with _$DeviceFormEvent {
   const factory DeviceFormEvent.started() = _Started;
-  const factory DeviceFormEvent.startedEdit(String id) = _StartedEdit;
+  const factory DeviceFormEvent.startedEdit(DeviceModel device) = _StartedEdit;
   const factory DeviceFormEvent.serialNumberChanged(String value) = _SerialNumberChanged;
   const factory DeviceFormEvent.modelTypeChanged(String value) = _ModelTypeChanged;
   const factory DeviceFormEvent.statusChanged(DeviceStatus? value) = _StatusChanged;

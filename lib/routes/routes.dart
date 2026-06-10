@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lacakind_frontend/data/models/device_model.dart';
 import 'package:lacakind_frontend/layouts/app_scaffold/app_scaffold.dart';
 import 'package:lacakind_frontend/screens/client/clients_screen.dart';
 import 'package:lacakind_frontend/screens/contract/contracts_screen.dart';
 import 'package:lacakind_frontend/screens/dashboard/dashboard_screen.dart';
-import 'package:lacakind_frontend/screens/device/device_detail/bloc/device_detail_bloc.dart';
 import 'package:lacakind_frontend/screens/device/device_detail/device_detail_screen.dart';
-import 'package:lacakind_frontend/screens/device/device_form/bloc/device_form_bloc.dart';
 import 'package:lacakind_frontend/screens/device/device_form/device_form_screen.dart';
 import 'package:lacakind_frontend/screens/device/device_list/bloc/device_list_bloc.dart';
 import 'package:lacakind_frontend/screens/device/device_list/device_list_screen.dart';
@@ -82,47 +81,41 @@ class DeviceListRoute extends GoRouteData with $DeviceListRoute {
   }
 }
 
+/// /device-list/new — add a new device (no device object needed)
 @immutable
 class DeviceNewRoute extends GoRouteData with $DeviceNewRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      child: BlocProvider(
-        create: (_) => DeviceFormBloc()..add(const DeviceFormEvent.started()),
-        child: const DeviceFormScreen(),
-      ),
+    return const NoTransitionPage(
+      child: DeviceFormScreen(device: null),
     );
   }
 }
 
 @immutable
 class DeviceDetailRoute extends GoRouteData with $DeviceDetailRoute {
-  const DeviceDetailRoute({required this.id});
+  const DeviceDetailRoute({required this.id, this.$extra});
   final String id;
+  final DeviceModel? $extra;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
-      child: BlocProvider(
-        create: (_) => DeviceDetailBloc()..add(DeviceDetailEvent.started(id)),
-        child: DeviceDetailScreen(deviceId: id),
-      ),
+      child: DeviceDetailScreen(device: $extra!),
     );
   }
 }
 
 @immutable
 class DeviceEditRoute extends GoRouteData with $DeviceEditRoute {
-  const DeviceEditRoute({required this.id});
+  const DeviceEditRoute({required this.id, this.$extra});
   final String id;
+  final DeviceModel? $extra;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
-      child: BlocProvider(
-        create: (_) => DeviceFormBloc()..add(DeviceFormEvent.startedEdit(id)),
-        child: DeviceFormScreen(deviceId: id),
-      ),
+      child: DeviceFormScreen(device: $extra),
     );
   }
 }

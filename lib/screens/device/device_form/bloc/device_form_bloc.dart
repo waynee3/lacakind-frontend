@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lacakind_frontend/container.dart';
 import 'package:lacakind_frontend/data/enums/device_status.dart';
+import 'package:lacakind_frontend/data/models/device_model.dart';
 
 part 'device_form_event.dart';
 part 'device_form_state.dart';
@@ -14,7 +15,7 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
         case _Started():
           emit(const DeviceFormState.initial());
         case _StartedEdit():
-          await _onStartedEdit(event, emit);
+          _onStartedEdit(event, emit);
         case _SerialNumberChanged():
           emit(state.copyWith(serialNumber: event.value));
         case _ModelTypeChanged():
@@ -40,16 +41,9 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
       }
     });
   }
- 
-  Future<void> _onStartedEdit(
-      _StartedEdit event, Emitter<DeviceFormState> emit) async {
-    emit(state.copyWith(isLoading: true, errorMessage: ''));
-    final (device, error) = await deviceRepo.getDeviceById(event.id);
-    if (error != null) {
-      emit(state.copyWith(isLoading: false, errorMessage: error));
-      return;
-    }
-    final d = device!;
+
+  void _onStartedEdit(_StartedEdit event, Emitter<DeviceFormState> emit) {
+    final d = event.device;
     emit(DeviceFormState.initial(
       editingId: d.id,
       serialNumber: d.serialNumber,
@@ -62,17 +56,16 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
       purchaseDate: d.purchaseDate,
       activationDate: d.activationDate,
       warrantyExpiry: d.warrantyExpiry,
-      isLoading: false,
     ));
   }
- 
+
   Future<void> _onSubmitted(Emitter<DeviceFormState> emit) async {
     if (state.serialNumber.trim().isEmpty) {
       emit(state.copyWith(errorMessage: 'Serial number is required'));
       return;
     }
     emit(state.copyWith(isLoading: true, errorMessage: ''));
- 
+
     final payload = <String, dynamic>{
       'serialNumber': state.serialNumber.trim(),
       if (state.modelType.isNotEmpty) 'modelType': state.modelType.trim(),
@@ -88,18 +81,26 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
       if (state.warrantyExpiry != null)
         'warrantyExpiry': state.warrantyExpiry!.toIso8601String(),
     };
- 
-    final String? error;
+
     if (state.editingId != null) {
-      error = await deviceRepo.updateDevice(state.editingId!, payload);
+      final error = await deviceRepo.updateDevice(state.editingId!, payload);
+      if (error != null) {
+        emit(state.copyWith(isLoading: false, errorMessage: error));
+        return;
+      }
+      final (updated, fetchError) = await deviceRepo.getDeviceById(state.editingId!);
+      if (fetchError != null) {
+        emit(state.copyWith(isLoading: false, errorMessage: fetchError));
+        return;
+      }
+      emit(state.copyWith(isLoading: false, isSuccess: true, savedDevice: updated));
     } else {
-      error = await deviceRepo.addDevice(payload);
+      final error = await deviceRepo.addDevice(payload);
+      if (error != null) {
+        emit(state.copyWith(isLoading: false, errorMessage: error));
+        return;
+      }
+      emit(state.copyWith(isLoading: false, isSuccess: true));
     }
- 
-    if (error != null) {
-      emit(state.copyWith(isLoading: false, errorMessage: error));
-      return;
-    }
-    emit(state.copyWith(isLoading: false, isSuccess: true));
   }
 }
