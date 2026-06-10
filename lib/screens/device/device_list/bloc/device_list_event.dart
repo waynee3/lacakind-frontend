@@ -19,7 +19,8 @@ sealed class DeviceListEvent with _$DeviceListEvent {
   ) = _Updated;
   const factory DeviceListEvent.deleteDevice(String id) = _Deleted;
   const factory DeviceListEvent.importDevices({
-    required String filePath,
+    String? filePath,
+    Uint8List? fileBytes,
     required String fileName,
   }) = _Imported;
 }

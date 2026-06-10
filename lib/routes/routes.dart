@@ -37,9 +37,13 @@ class LoginRoute extends GoRouteData with $LoginRoute {
     TypedGoRoute<DeviceListRoute>(
       path: '/device-list',
       routes: [
-        TypedGoRoute<DeviceDetailRoute>(path: ':id'),
         TypedGoRoute<DeviceNewRoute>(path: 'new'),
-        TypedGoRoute<DeviceEditRoute>(path: ':id/edit'),
+        TypedGoRoute<DeviceDetailRoute>(
+          path: ':id',
+          routes: [
+            TypedGoRoute<DeviceEditRoute>(path: 'edit'),
+          ],
+        ),
       ],
     ),
     TypedGoRoute<ClientsRoute>(path: '/clients'),
@@ -79,6 +83,19 @@ class DeviceListRoute extends GoRouteData with $DeviceListRoute {
 }
 
 @immutable
+class DeviceNewRoute extends GoRouteData with $DeviceNewRoute {
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return NoTransitionPage(
+      child: BlocProvider(
+        create: (_) => DeviceFormBloc()..add(const DeviceFormEvent.started()),
+        child: const DeviceFormScreen(),
+      ),
+    );
+  }
+}
+
+@immutable
 class DeviceDetailRoute extends GoRouteData with $DeviceDetailRoute {
   const DeviceDetailRoute({required this.id});
   final String id;
@@ -95,19 +112,6 @@ class DeviceDetailRoute extends GoRouteData with $DeviceDetailRoute {
 }
 
 @immutable
-class DeviceNewRoute extends GoRouteData with $DeviceNewRoute {
-  @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      child: BlocProvider(
-        create: (_) => DeviceFormBloc()..add(const DeviceFormEvent.started()),
-        child: const DeviceFormScreen(),
-      ),
-    );
-  }
-}
-
-@immutable
 class DeviceEditRoute extends GoRouteData with $DeviceEditRoute {
   const DeviceEditRoute({required this.id});
   final String id;
@@ -116,7 +120,7 @@ class DeviceEditRoute extends GoRouteData with $DeviceEditRoute {
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
       child: BlocProvider(
-        create: (_) => DeviceFormBloc(),
+        create: (_) => DeviceFormBloc()..add(DeviceFormEvent.startedEdit(id)),
         child: DeviceFormScreen(deviceId: id),
       ),
     );

@@ -78,10 +78,11 @@ final lightTheme = ThemeData(
   filledButtonTheme: FilledButtonThemeData(
     style: FilledButton.styleFrom(
       backgroundColor: baseBlack,
+      iconColor: baseWhite,
       foregroundColor: baseWhite,
       disabledBackgroundColor: neutral200,
       disabledForegroundColor: neutral600,
-      textStyle: _textTheme.bodyLarge?.medium,
+      textStyle: _textTheme.bodyLarge.medium,
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
@@ -91,7 +92,7 @@ final lightTheme = ThemeData(
           foregroundColor: baseBlack,
           disabledBackgroundColor: neutral200,
           disabledForegroundColor: neutral800,
-          textStyle: _textTheme.bodyLarge?.medium,
+          textStyle: _textTheme.bodyLarge.medium,
         ).copyWith(
           side: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
@@ -105,7 +106,7 @@ final lightTheme = ThemeData(
     style: TextButton.styleFrom(
       foregroundColor: baseBlack,
       disabledForegroundColor: neutral600,
-      textStyle: _textTheme.bodyLarge?.medium,
+      textStyle: _textTheme.bodyLarge.medium,
     ),
   ),
   appBarTheme: const AppBarTheme(
@@ -115,12 +116,12 @@ final lightTheme = ThemeData(
   primaryIconTheme: const IconThemeData(color: baseBlack),
   dialogTheme: DialogThemeData(
     backgroundColor: baseWhite,
-    titleTextStyle: _textTheme.headlineMedium?.bold,
+    titleTextStyle: _textTheme.headlineMedium.bold,
     contentTextStyle: _textTheme.bodyMedium,
     shadowColor: neutral200,
   ),
   dropdownMenuTheme: DropdownMenuThemeData(
-    textStyle: _textTheme.bodyMedium?.regular?.copyWith(color: baseBlack),
+    textStyle: _textTheme.bodyMedium.regular?.copyWith(color: baseBlack),
     inputDecorationTheme: const InputDecorationTheme(
       labelStyle: TextStyle(color: baseBlack),
       hintStyle: TextStyle(color: neutral600),
@@ -187,10 +188,11 @@ final darkTheme = ThemeData(
   filledButtonTheme: FilledButtonThemeData(
     style: FilledButton.styleFrom(
       backgroundColor: baseWhite,
+      iconColor: baseBlack,
       foregroundColor: baseBlack,
       disabledBackgroundColor: neutral200,
       disabledForegroundColor: neutral600,
-      textStyle: _textTheme.bodyLarge?.medium,
+      textStyle: _textTheme.bodyLarge.medium,
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
@@ -200,7 +202,7 @@ final darkTheme = ThemeData(
           foregroundColor: baseWhite,
           disabledBackgroundColor: neutral200,
           disabledForegroundColor: neutral800,
-          textStyle: _textTheme.bodyLarge?.medium,
+          textStyle: _textTheme.bodyLarge.medium,
         ).copyWith(
           side: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
@@ -214,7 +216,7 @@ final darkTheme = ThemeData(
     style: TextButton.styleFrom(
       foregroundColor: baseWhite,
       disabledForegroundColor: neutral600,
-      textStyle: _textTheme.bodyLarge?.medium,
+      textStyle: _textTheme.bodyLarge.medium,
     ),
   ),
   appBarTheme: const AppBarTheme(
@@ -224,12 +226,12 @@ final darkTheme = ThemeData(
   primaryIconTheme: const IconThemeData(color: baseWhite),
   dialogTheme: DialogThemeData(
     backgroundColor: baseBlack,
-    titleTextStyle: _textTheme.headlineMedium?.bold,
+    titleTextStyle: _textTheme.headlineMedium.bold,
     contentTextStyle: _textTheme.bodyMedium,
     shadowColor: neutral600,
   ),
   dropdownMenuTheme: DropdownMenuThemeData(
-    textStyle: _textTheme.bodyMedium?.regular?.copyWith(color: baseWhite),
+    textStyle: _textTheme.bodyMedium.regular?.copyWith(color: baseWhite),
     inputDecorationTheme: const InputDecorationTheme(
       labelStyle: TextStyle(color: baseWhite),
       hintStyle: TextStyle(color: neutral200),
@@ -250,17 +252,17 @@ final darkTheme = ThemeData(
   ),
 );
 
-final _textTheme = TextTheme(
-  displayLarge: const TextStyle(fontSize: 60, height: 1.2),
-  displayMedium: const TextStyle(fontSize: 48, height: 1.2),
-  displaySmall: const TextStyle(fontSize: 36, height: 1.2),
-  headlineLarge: const TextStyle(fontSize: 30, height: 40 / 30),
-  headlineMedium: const TextStyle(fontSize: 28, height: 36 / 28),
-  headlineSmall: const TextStyle(fontSize: 24, height: 32 / 24),
-  titleLarge: const TextStyle(fontSize: 22, height: 32 / 22),
-  titleMedium: const TextStyle(fontSize: 20, height: 32 / 20),
-  titleSmall: const TextStyle(fontSize: 18, height: 28 / 18),
-  bodyLarge: const TextStyle(fontSize: 16, height: 24 / 16),
-  bodyMedium: const TextStyle(fontSize: 14, height: 20 / 14),
-  bodySmall: const TextStyle(fontSize: 12, height: 16 / 12),
-);
+final _textTheme = const TextTheme(
+  displayLarge: TextStyle(fontSize: 60, height: 1.2),
+  displayMedium: TextStyle(fontSize: 48, height: 1.2),
+  displaySmall: TextStyle(fontSize: 36, height: 1.2),
+  headlineLarge: TextStyle(fontSize: 30, height: 40 / 30),
+  headlineMedium: TextStyle(fontSize: 28, height: 36 / 28),
+  headlineSmall: TextStyle(fontSize: 24, height: 32 / 24),
+  titleLarge: TextStyle(fontSize: 22, height: 32 / 22),
+  titleMedium: TextStyle(fontSize: 20, height: 32 / 20),
+  titleSmall: TextStyle(fontSize: 18, height: 28 / 18),
+  bodyLarge: TextStyle(fontSize: 16, height: 24 / 16),
+  bodyMedium: TextStyle(fontSize: 14, height: 20 / 14),
+  bodySmall: TextStyle(fontSize: 12, height: 16 / 12),
+).apply(fontFamily: "DM Sans");

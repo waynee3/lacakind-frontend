@@ -7,6 +7,8 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     final (bg, fg) = switch (status.style) {
       DeviceStatusStyle.green  => (const Color(0xFFDCFCE7), const Color(0xFF166534)),
       DeviceStatusStyle.orange => (const Color(0xFFFFF7ED), const Color(0xFF9A3412)),
@@ -22,8 +24,7 @@ class StatusChip extends StatelessWidget {
       ),
       child: Text(
         status.label,
-        style: TextStyle(
-            color: fg, fontSize: 12, fontWeight: FontWeight.w600),
+        style: textTheme.bodySmall?.copyWith(color: fg),
       ),
     );
   }

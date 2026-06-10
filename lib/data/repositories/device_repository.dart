@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:lacakind_frontend/core/api_client.dart';
 import 'package:lacakind_frontend/data/models/device_model.dart';
@@ -13,13 +15,16 @@ class DeviceRepository {
     int page = 1,
   }) async {
     final (res, error) = await ApiClient.safeCall(
-      () => _dio.get('/devices', queryParameters: {
-        'serialNumber': ?serialNumber,
-        'status': ?status,
-        'modelType': ?modelType,
-        'location': ?location,
-        'page': page,
-      }),
+      () => _dio.get(
+        '/devices',
+        queryParameters: {
+          'serialNumber': ?serialNumber,
+          'status': ?status,
+          'modelType': ?modelType,
+          'location': ?location,
+          'page': page,
+        },
+      ),
     );
     if (error != null) return (null, error);
     final devices = (res!.data as List)
@@ -62,26 +67,39 @@ class DeviceRepository {
     Map<String, dynamic> data,
   ) async {
     final (_, error) = await ApiClient.safeCall(
-      () => _dio.post('/devices/bulk/lifecycle', data: {
-        'deviceIds': deviceIds,
-        ...data,
-      }),
+      () => _dio.post(
+        '/devices/bulk/lifecycle',
+        data: {'deviceIds': deviceIds, ...data},
+      ),
     );
     return error;
   }
 
-  /// Imports devices from a CSV file (multipart/form-data).
-  /// Returns (successCount, errors, fatalError).
   Future<({int? inserted, List<String> errors, String? fatalError})>
-      importDevices(String filePath, String fileName) async {
+  importDevices({
+    String? filePath,
+    Uint8List? fileBytes,
+    required String fileName,
+  }) async {
     try {
-      final formData = FormData.fromMap({
-        'csvFile': await MultipartFile.fromFile(filePath, filename: fileName),
-      });
+      if (fileBytes == null && filePath == null) {
+        return (
+          inserted: null,
+          errors: ['No CSV file selected'],
+          fatalError: 'No CSV file selected',
+        );
+      }
+
+      final csvFile = fileBytes != null
+          ? MultipartFile.fromBytes(fileBytes, filename: fileName)
+          : await MultipartFile.fromFile(filePath!, filename: fileName);
+      final formData = FormData.fromMap({'csvFile': csvFile});
       final (res, error) = await ApiClient.safeCall(
         () => _dio.post('/utilities/bulk-import', data: formData),
       );
-      if (error != null) return (inserted: null, errors: [error], fatalError: error);
+      if (error != null) {
+        return (inserted: null, errors: [error], fatalError: error);
+      }
       final data = res!.data as Map<String, dynamic>;
       final rawErrors = data['errors'];
       final errors = rawErrors is List

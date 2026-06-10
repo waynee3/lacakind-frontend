@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lacakind_frontend/extensions/text_ext.dart';
 import 'package:lacakind_frontend/routes/routes.dart';
 import 'package:lacakind_frontend/screens/device/device_list/bloc/device_list_bloc.dart';
+import 'package:lacakind_frontend/screens/device/device_list/widget/bulk_import_review_dialog.dart';
 import 'package:lacakind_frontend/screens/device/device_list/widget/bulk_lifecycle_dialog.dart';
 import 'package:lacakind_frontend/styles/color.styles.dart';
 import 'package:lacakind_frontend/widgets/status_widget.dart';
@@ -34,16 +35,26 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['csv'],
+      withData: true,
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    if (file.path == null) return;
-    if (context.mounted) {
+    if (file.bytes == null) return;
+    if (!context.mounted) return;
+
+    final confirmed = await BulkImportReviewDialog.show(
+      context,
+      csvBytes: file.bytes!,
+    );
+
+    if (confirmed == true && context.mounted) {
       context.read<DeviceListBloc>().add(
-            DeviceListEvent.importDevices(
-              filePath: file.path!,
-              fileName: file.name,
-            ));
+        DeviceListEvent.importDevices(
+          filePath: file.path,
+          fileBytes: file.bytes,
+          fileName: file.name,
+        ),
+      );
     }
   }
 
@@ -62,8 +73,11 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      size: 16, color: Colors.orange),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: Colors.orange,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(child: Text(errors[i])),
                 ],
@@ -88,18 +102,22 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     return BlocListener<DeviceListBloc, DeviceListState>(
       listener: (context, state) {
         if (state.isSuccess && state.successMessage.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.successMessage),
-            backgroundColor: Colors.green.shade700,
-            behavior: SnackBarBehavior.floating,
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.successMessage),
+              backgroundColor: Colors.green.shade700,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
         if (state.errorMessage.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.errorMessage),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage),
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
         if (state.importErrors.isNotEmpty) {
           _showImportErrorsDialog(context, state.importErrors);
@@ -110,7 +128,6 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
           padding: const EdgeInsets.all(32),
           child: Column(
             children: [
-              // ── Top bar ─────────────────────────────────────
               Row(
                 children: [
                   Expanded(
@@ -126,22 +143,29 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => _handleImport(context),
-                    icon: const Icon(Icons.upload_file_outlined, size: 18),
-                    label: const Text('Import CSV'),
+                  SizedBox(
+                    height: 44,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _handleImport(context),
+                      icon: const Icon(Icons.upload_file_outlined, size: 18),
+                      label: Text(
+                        'Import CSV',
+                        style: textTheme.bodyLarge.medium,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  FilledButton.icon(
-                    onPressed: () => DeviceNewRoute().go(context),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add Device'),
+                  SizedBox(
+                    height: 44,
+                    child: FilledButton.icon(
+                      onPressed: () => DeviceNewRoute().go(context),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text('Add Device'),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-
-              // ── Table container ──────────────────────────────
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -152,9 +176,11 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                   ),
                   child: BlocBuilder<DeviceListBloc, DeviceListState>(
                     builder: (context, state) {
-                      final isAllSelected = state.devices.isNotEmpty &&
-                          state.devices
-                              .every((d) => state.selectedIds.contains(d.id));
+                      final isAllSelected =
+                          state.devices.isNotEmpty &&
+                          state.devices.every(
+                            (d) => state.selectedIds.contains(d.id),
+                          );
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +194,8 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                   Text(
                                     '(${state.selectedIds.length}/${state.devices.length}) selected',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.w500),
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   OutlinedButton.icon(
@@ -176,11 +203,13 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                       final result = await showDialog<bool>(
                                         context: context,
                                         builder: (_) => BulkLifecycleDialog(
-                                            selectedIds: state.selectedIds),
+                                          selectedIds: state.selectedIds,
+                                        ),
                                       );
                                       if (result == true && context.mounted) {
                                         context.read<DeviceListBloc>().add(
-                                            const DeviceListEvent.started());
+                                          const DeviceListEvent.started(),
+                                        );
                                       }
                                     },
                                     icon: const Icon(Icons.settings, size: 16),
@@ -195,8 +224,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
 
                           // Header row
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Row(
                               children: [
                                 Expanded(
@@ -206,8 +234,8 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                         value: isAllSelected,
                                         onChanged: (_) =>
                                             context.read<DeviceListBloc>().add(
-                                                const DeviceListEvent
-                                                    .selectAll()),
+                                              const DeviceListEvent.selectAll(),
+                                            ),
                                       ),
                                       const SizedBox(width: 4),
                                       const Text('Select all'),
@@ -257,12 +285,12 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
           borderRadius: BorderRadius.circular(8),
           onTap: () => DeviceDetailRoute(id: device.id).go(context),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                  color: isSelected ? Colors.black54 : neutral300),
+                color: isSelected ? Colors.black54 : neutral300,
+              ),
             ),
             child: Row(
               children: [
@@ -272,7 +300,8 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                     child: Checkbox(
                       value: isSelected,
                       onChanged: (_) => context.read<DeviceListBloc>().add(
-                            DeviceListEvent.selectDevice(device.id)),
+                        DeviceListEvent.selectDevice(device.id),
+                      ),
                     ),
                   ),
                 ),
@@ -284,17 +313,13 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                       ? StatusChip(status: device.status!)
                       : const Text('—'),
                 ),
-                Expanded(
-                    flex: 2,
-                    child: Text(device.currentLocation ?? '—')),
-                // Edit icon
+                Expanded(flex: 2, child: Text(device.currentLocation ?? '—')),
                 SizedBox(
                   width: 48,
                   child: IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     tooltip: 'Edit',
-                    onPressed: () =>
-                        DeviceEditRoute(id: device.id).go(context),
+                    onPressed: () => DeviceEditRoute(id: device.id).go(context),
                   ),
                 ),
               ],
@@ -306,16 +331,13 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 class _HeaderCell extends StatelessWidget {
   final String text;
   const _HeaderCell(this.text);
 
   @override
   Widget build(BuildContext context) => Expanded(
-        flex: 2,
-        child: Text(text,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-      );
+    flex: 2,
+    child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+  );
 }
