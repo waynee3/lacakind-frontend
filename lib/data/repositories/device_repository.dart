@@ -78,14 +78,32 @@ class DeviceRepository {
     return error;
   }
 
-  Future<String?> bulkLifecycleEvent(
-    List<String> deviceIds,
-    Map<String, dynamic> data,
-  ) async {
+  Future<String?> bulkLifecycleEvent({
+    required List<String> serialNumbers,
+    required String action,
+    required String createdBy,
+    String? description,
+    String? associatedLocation,
+    String? relatedReference,
+  }) async {
+    final bulkOperation = <String, dynamic>{
+      'bulkOpId': 'bulk-${DateTime.now().millisecondsSinceEpoch}',
+      'action': action,
+      'affectedDevices': serialNumbers,
+      'createdBy': createdBy,
+      'timestamp': DateTime.now().toIso8601String(),
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (associatedLocation != null && associatedLocation.isNotEmpty)
+        'associatedLocation': associatedLocation,
+      if (relatedReference != null && relatedReference.isNotEmpty)
+        'relatedReference': relatedReference,
+    };
+
     final (_, error) = await ApiClient.safeCall(
       () => _dio.post(
-        '/devices/bulk/lifecycle',
-        data: {'deviceIds': deviceIds, ...data},
+        '/devices/bulk-lifecycle',
+        data: {'bulkOperation': bulkOperation},
       ),
     );
     return error;

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:lacakind_frontend/core/api_client.dart';
 import 'package:lacakind_frontend/core/token_storage.dart';
 
@@ -21,5 +23,21 @@ class AuthRepository {
   Future<bool> isLoggedIn() async {
     final token = await TokenStorage.read();
     return token != null;
+  }
+
+  Future<String?> currentEmail() async {
+    final token = await TokenStorage.read();
+    if (token == null) return null;
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      var payload = parts[1];
+      payload = payload.padRight((payload.length + 3) & ~3, '=');
+      final decoded = utf8.decode(base64Url.decode(payload));
+      final map = jsonDecode(decoded) as Map<String, dynamic>;
+      return map['email'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
 }

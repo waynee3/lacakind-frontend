@@ -1,39 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:lacakind_frontend/container.dart';
+import 'package:lacakind_frontend/data/enums/device_event_type.dart';
 import 'package:lacakind_frontend/extensions/text_ext.dart';
 import 'package:lacakind_frontend/styles/color.styles.dart';
 import 'package:lacakind_frontend/widgets/label_dropdown.dart';
 import 'package:lacakind_frontend/widgets/label_text_field.dart';
 
-const _kEventTypes = [
-  'Deployment to Client',
-  'Return from Client',
-  'Sent for Repair',
-  'Returned from Repair',
-  'Decommissioned',
-  'Archived',
-];
-
 class BulkLifecycleDialog extends StatefulWidget {
-  final List<String> selectedIds;
+  final List<String> serialNumbers;
 
-  const BulkLifecycleDialog({super.key, required this.selectedIds});
+  const BulkLifecycleDialog({super.key, required this.serialNumbers});
 
   @override
   State<BulkLifecycleDialog> createState() => _BulkLifecycleDialogState();
 }
 
 class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
-  String? _eventType;
+  DeviceEventType? _eventType;
   final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
   final _responsiblePartyController = TextEditingController();
   final _referenceController = TextEditingController();
   bool _isLoading = false;
   String? _error;
 
+  bool get _needsLocation =>
+      _eventType == DeviceEventType.deployment ||
+      _eventType == DeviceEventType.swapDeployment ||
+      _eventType == DeviceEventType.maintenanceComplete;
+
   @override
   void dispose() {
     _descriptionController.dispose();
+    _locationController.dispose();
     _responsiblePartyController.dispose();
     _referenceController.dispose();
     super.dispose();
@@ -49,17 +48,17 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
       _error = null;
     });
 
-    final data = {
-      'eventType': _eventType,
-      if (_descriptionController.text.isNotEmpty)
-        'description': _descriptionController.text.trim(),
-      if (_responsiblePartyController.text.isNotEmpty)
-        'responsibleParty': _responsiblePartyController.text.trim(),
-      if (_referenceController.text.isNotEmpty)
-        'relatedReference': _referenceController.text.trim(),
-    };
+    final createdBy = await authRepo.currentEmail() ?? 'unknown';
 
-    final error = await deviceRepo.bulkLifecycleEvent(widget.selectedIds, data);
+    final error = await deviceRepo.bulkLifecycleEvent(
+      serialNumbers: widget.serialNumbers,
+      action: _eventType!.label,
+      createdBy: createdBy,
+      description: _descriptionController.text.trim(),
+      associatedLocation: _locationController.text.trim(),
+      relatedReference: _referenceController.text.trim(),
+    );
+
     if (!mounted) return;
 
     if (error != null) {
@@ -82,126 +81,139 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
       clipBehavior: Clip.hardEdge,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(textTheme),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionHeader(
-                    icon: Icons.calendar_today_outlined,
-                    label: 'Event Configuration',
-                    textTheme: textTheme,
-                  ),
-                  const SizedBox(height: 12),
-                  LabelDropdown<String>(
-                    label: 'Event Type',
-                    hintText: 'Select event type',
-                    value: _eventType,
-                    items: _kEventTypes
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _eventType = v),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSectionHeader(
-                    icon: Icons.info_outline,
-                    label: 'Event Details',
-                    textTheme: textTheme,
-                  ),
-                  const SizedBox(height: 12),
-                  LabelTextField(
-                    label: 'Description',
-                    hintText: 'Description',
-                    controller: _descriptionController,
-                    prefixIcon: const Icon(Icons.description_outlined),
-                  ),
-                  const SizedBox(height: 12),
-                  LabelTextField(
-                    label: 'Responsible Party',
-                    hintText: 'Responsible Party',
-                    controller: _responsiblePartyController,
-                    prefixIcon: const Icon(Icons.person_outline),
-                    suffixIcon: const Icon(Icons.info_outline),
-                  ),
-                  const SizedBox(height: 12),
-                  LabelTextField(
-                    label: 'Reference (Optional)',
-                    hintText: 'Reference (Optional)',
-                    controller: _referenceController,
-                    prefixIcon: const Icon(Icons.qr_code),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 8),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(textTheme),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      _error!,
-                      style: textTheme.bodySmall?.copyWith(color: error500),
+                      'Event Configuration',
+                      style: textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 12),
+                    LabelDropdown<DeviceEventType>(
+                      label: 'Event Type',
+                      hintText: 'Select event type',
+                      value: _eventType,
+                      items: DeviceEventType.values
+                          .map((e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e.label),
+                              ))
+                          .toList(),
+                      onChanged: (v) => setState(() => _eventType = v),
+                    ),
+                    if (_needsLocation) ...[
+                      const SizedBox(height: 12),
+                      LabelTextField(
+                        label: 'Location',
+                        hintText: 'e.g. Client Site, Jakarta',
+                        controller: _locationController,
+                        prefixIcon: const Icon(Icons.location_on_outlined),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Text(
+                      'Event Details',
+                      style: textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    LabelTextField(
+                      label: 'Description',
+                      hintText: 'Description',
+                      controller: _descriptionController,
+                      prefixIcon: const Icon(Icons.description_outlined),
+                    ),
+                    const SizedBox(height: 12),
+                    LabelTextField(
+                      label: 'Responsible Party',
+                      hintText: 'Responsible Party',
+                      controller: _responsiblePartyController,
+                      prefixIcon: const Icon(Icons.person_outline),
+                    ),
+                    const SizedBox(height: 12),
+                    LabelTextField(
+                      label: 'Reference (Optional)',
+                      hintText: 'Reference (Optional)',
+                      controller: _referenceController,
+                      prefixIcon: const Icon(Icons.qr_code),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _error!,
+                        style: textTheme.bodySmall?.copyWith(color: error500),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 44,
-                      child: TextButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => Navigator.of(context).pop(false),
-                        child: Text(
-                          "Cancel",
-                          style: textTheme.bodyLarge?.medium,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: TextButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.of(context).pop(false),
+                          child: Text(
+                            'Cancel',
+                            style: textTheme.bodyLarge?.medium,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 44,
-                      child: OutlinedButton(
-                        onPressed: _isLoading ? null : _apply,
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.check, size: 16),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    "Apply changes",
-                                    style: textTheme.bodyLarge?.medium,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : _apply,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
-                                ],
-                              ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.check, size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Apply changes',
+                                      style: textTheme.bodyLarge?.medium,
+                                    ),
+                                  ],
+                                ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader(TextTheme textTheme) {
+    final count = widget.serialNumbers.length;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -215,9 +227,10 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Bulk Lifecycle Event', style: textTheme.titleSmall?.bold),
+                Text('Bulk Lifecycle Event',
+                    style: textTheme.titleSmall?.bold),
                 Text(
-                  '${widget.selectedIds.length} device selected',
+                  '$count device${count == 1 ? '' : 's'} selected',
                   style: textTheme.bodySmall,
                 ),
               ],
@@ -229,17 +242,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String label,
-    required TextTheme textTheme,
-  }) {
-    return Text(
-      label,
-      style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }

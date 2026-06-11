@@ -227,13 +227,26 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                   const SizedBox(width: 12),
                                   OutlinedButton.icon(
                                     onPressed: () async {
+                                      final serials = state.devices
+                                          .where((d) => state.selectedIds
+                                              .contains(d.id))
+                                          .map((d) => d.serialNumber)
+                                          .toList();
                                       final result = await showDialog<bool>(
                                         context: context,
                                         builder: (_) => BulkLifecycleDialog(
-                                          selectedIds: state.selectedIds,
+                                          serialNumbers: serials,
                                         ),
                                       );
                                       if (result == true && context.mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                          content: Text(
+                                              'Lifecycle event applied to ${serials.length} device${serials.length == 1 ? '' : 's'}'),
+                                          backgroundColor:
+                                              Colors.green.shade700,
+                                          behavior: SnackBarBehavior.floating,
+                                        ));
                                         context.read<DeviceListBloc>().add(
                                             const DeviceListEvent.started());
                                       }
@@ -321,7 +334,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     return ListView.separated(
       controller: _scrollController,
       itemCount: itemCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         if (index == state.devices.length) {
           return Padding(

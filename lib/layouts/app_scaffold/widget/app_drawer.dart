@@ -12,7 +12,7 @@ class AppDrawer extends StatelessWidget {
 
     final dashboardLoc = DashboardRoute().location;
     final deviceLoc = DeviceListRoute().location;
-    final clientsLoc = ClientsRoute().location;
+    final clientsLoc = ClientListRoute().location;
     final contractsLoc = ContractsRoute().location;
     final lifecycleLogLoc = LifecycleLogRoute().location;
 
@@ -39,7 +39,7 @@ class AppDrawer extends StatelessWidget {
           icon: Icons.dashboard_outlined,
           iconActive: Icons.dashboard,
           location: clientsLoc,
-          onClick: () => ClientsRoute().go(context),
+          onClick: () => ClientListRoute().go(context),
           currentLocation: current,
         ),
         NavigationItem(
