@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lacakind_frontend/layouts/app_scaffold/app_scaffold.dart';
-import 'package:lacakind_frontend/screens/client/clients_screen.dart';
+import 'package:lacakind_frontend/screens/client/client_form/client_form_screen.dart';
+import 'package:lacakind_frontend/screens/client/client_list/bloc/client_list_bloc.dart';
+import 'package:lacakind_frontend/screens/client/client_list/clients_list_screen.dart';
 import 'package:lacakind_frontend/screens/contract/contracts_screen.dart';
 import 'package:lacakind_frontend/screens/dashboard/dashboard_screen.dart';
 import 'package:lacakind_frontend/screens/device/device_detail/device_detail_screen.dart';
@@ -42,7 +44,10 @@ class LoginRoute extends GoRouteData with $LoginRoute {
         ),
       ],
     ),
-    TypedGoRoute<ClientsRoute>(path: '/clients'),
+    TypedGoRoute<ClientListRoute>(
+      path: '/clients',
+      routes: [TypedGoRoute<ClientNewRoute>(path: 'new')],
+    ),
     TypedGoRoute<LifecycleLogRoute>(path: '/lifecycle-log'),
     TypedGoRoute<ContractsRoute>(path: '/contracts'),
   ],
@@ -71,26 +76,22 @@ class DeviceListRoute extends GoRouteData with $DeviceListRoute {
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
       child: BlocProvider(
-        create: (_) => DeviceListBloc()..add(const DeviceListEvent.started()),
+        create: (context) =>
+            DeviceListBloc()..add(const DeviceListEvent.started()),
         child: const DeviceListScreen(),
       ),
     );
   }
 }
 
-/// /device-list/new — add a new device.
 @immutable
 class DeviceNewRoute extends GoRouteData with $DeviceNewRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage(
-      child: DeviceFormScreen(serialNumber: null),
-    );
+    return const NoTransitionPage(child: DeviceFormScreen(serialNumber: null));
   }
 }
 
-/// /device-list/:serialNumber — device detail.
-/// The screen fetches the device by serial number, so this survives a refresh.
 @immutable
 class DeviceDetailRoute extends GoRouteData with $DeviceDetailRoute {
   const DeviceDetailRoute({required this.serialNumber});
@@ -104,7 +105,6 @@ class DeviceDetailRoute extends GoRouteData with $DeviceDetailRoute {
   }
 }
 
-/// /device-list/:serialNumber/edit — edit an existing device.
 @immutable
 class DeviceEditRoute extends GoRouteData with $DeviceEditRoute {
   const DeviceEditRoute({required this.serialNumber});
@@ -119,10 +119,23 @@ class DeviceEditRoute extends GoRouteData with $DeviceEditRoute {
 }
 
 @immutable
-class ClientsRoute extends GoRouteData with $ClientsRoute {
+class ClientListRoute extends GoRouteData with $ClientListRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage(child: ClientsScreen());
+    return NoTransitionPage(
+      child: BlocProvider(
+        create: (context) => ClientListBloc(),
+        child: ClientListScreen(),
+      ),
+    );
+  }
+}
+
+@immutable
+class ClientNewRoute extends GoRouteData with $ClientNewRoute {
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const NoTransitionPage(child: ClientFormScreen());
   }
 }
 
