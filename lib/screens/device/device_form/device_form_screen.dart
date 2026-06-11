@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lacakind_frontend/data/enums/device_status.dart';
-import 'package:lacakind_frontend/data/models/device_model.dart';
 import 'package:lacakind_frontend/extensions/text_ext.dart';
 import 'package:lacakind_frontend/routes/routes.dart';
 import 'package:lacakind_frontend/screens/device/device_form/bloc/device_form_bloc.dart';
@@ -10,10 +9,9 @@ import 'package:lacakind_frontend/screens/device/device_form/widget/device_form_
 import 'package:lacakind_frontend/widgets/label_text_field.dart';
 
 class DeviceFormScreen extends StatefulWidget {
-  /// Null = add mode. Non-null = edit mode, pre-filled from this object.
-  final DeviceModel? device;
+  final String? serialNumber;
 
-  const DeviceFormScreen({super.key, this.device});
+  const DeviceFormScreen({super.key, this.serialNumber});
 
   @override
   State<DeviceFormScreen> createState() => _DeviceFormScreenState();
@@ -21,32 +19,37 @@ class DeviceFormScreen extends StatefulWidget {
 
 class _DeviceFormScreenState extends State<DeviceFormScreen> {
   late final DeviceFormBloc _bloc;
-  late final TextEditingController _serialCtrl;
-  late final TextEditingController _modelCtrl;
-  late final TextEditingController _locationCtrl;
-  late final TextEditingController _supplierCtrl;
-  late final TextEditingController _batchCtrl;
-  late final TextEditingController _costCtrl;
+  final _serialCtrl = TextEditingController();
+  final _modelCtrl = TextEditingController();
+  final _locationCtrl = TextEditingController();
+  final _supplierCtrl = TextEditingController();
+  final _batchCtrl = TextEditingController();
+  final _costCtrl = TextEditingController();
+
+  bool _controllersFilled = false;
 
   @override
   void initState() {
     super.initState();
     _bloc = DeviceFormBloc();
-
-    final d = widget.device;
-    // Pre-fill controllers immediately from the passed device — no waiting
-    _serialCtrl   = TextEditingController(text: d?.serialNumber ?? '');
-    _modelCtrl    = TextEditingController(text: d?.modelType ?? '');
-    _locationCtrl = TextEditingController(text: d?.currentLocation ?? '');
-    _supplierCtrl = TextEditingController(text: d?.supplier ?? '');
-    _batchCtrl    = TextEditingController(text: d?.batchNumber ?? '');
-    _costCtrl     = TextEditingController(text: d?.cost?.toString() ?? '');
-
-    if (d != null) {
-      _bloc.add(DeviceFormEvent.startedEdit(d));
+    if (widget.serialNumber != null) {
+      _bloc.add(DeviceFormEvent.startedEdit(widget.serialNumber!));
     } else {
       _bloc.add(const DeviceFormEvent.started());
+      _controllersFilled = true; 
     }
+  }
+
+  void _fillControllers(DeviceFormState state) {
+    if (_controllersFilled) return;
+    if (state.editingId == null) return;
+    _controllersFilled = true;
+    _serialCtrl.text = state.serialNumber;
+    _modelCtrl.text = state.modelType;
+    _locationCtrl.text = state.location;
+    _supplierCtrl.text = state.supplier;
+    _batchCtrl.text = state.batchNumber;
+    _costCtrl.text = state.cost;
   }
 
   @override
@@ -64,7 +67,7 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final isEdit = widget.device != null;
+    final isEdit = widget.serialNumber != null;
 
     return BlocProvider.value(
       value: _bloc,
@@ -73,8 +76,7 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
           if (state.isSuccess) {
             if (isEdit && state.savedDevice != null) {
               DeviceDetailRoute(
-                id: state.savedDevice!.id,
-                $extra: state.savedDevice,
+                serialNumber: state.savedDevice!.serialNumber,
               ).go(context);
             } else {
               DeviceListRoute().go(context);
@@ -86,10 +88,10 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
             padding: const EdgeInsets.all(32),
             child: BlocBuilder<DeviceFormBloc, DeviceFormState>(
               builder: (context, state) {
+                _fillControllers(state);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Title bar ──────────────────────────────────
                     Row(
                       children: [
                         IconButton(
@@ -104,14 +106,11 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-
-                    // ── Form body ──────────────────────────────────
                     Expanded(
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Error banner
                             if (state.errorMessage.isNotEmpty)
                               Container(
                                 width: double.infinity,
@@ -131,7 +130,6 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                                   ),
                                 ),
                               ),
-
                             LabelTextField(
                               label: 'Serial Number *',
                               hintText: 'e.g. SN-0001',
@@ -142,7 +140,6 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-
                             LabelTextField(
                               label: 'Model Type',
                               hintText: 'e.g. GPS-Tracker-v2',
@@ -152,15 +149,13 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-
-                            // Status dropdown
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Status', style: textTheme.bodyMedium),
                                 const SizedBox(height: 4),
                                 DropdownButtonFormField<DeviceStatus>(
-                                  value: state.status,
+                                  initialValue: state.status,
                                   hint: const Text('Select status'),
                                   decoration: const InputDecoration(),
                                   items: DeviceStatus.values
@@ -178,7 +173,6 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-
                             LabelTextField(
                               label: 'Current Location',
                               hintText: 'e.g. Main Warehouse',
@@ -188,7 +182,6 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-
                             Row(
                               children: [
                                 Expanded(
@@ -215,7 +208,6 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-
                             LabelTextField(
                               label: 'Cost (USD)',
                               hintText: '0.00',
@@ -225,11 +217,8 @@ class _DeviceFormScreenState extends State<DeviceFormScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-
                             DeviceFormDatePickerRow(),
                             const SizedBox(height: 32),
-
-                            // Actions
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [

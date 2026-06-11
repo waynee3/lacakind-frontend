@@ -4,12 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:lacakind_frontend/container.dart';
 import 'package:lacakind_frontend/data/models/device_model.dart';
+import 'package:lacakind_frontend/data/repositories/device_repository.dart';
 
 part 'device_list_event.dart';
 part 'device_list_state.dart';
 part 'device_list_bloc.freezed.dart';
 
 class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
+  String? _serialNumber;
+  String? _status;
+  String? _modelType;
+  String? _location;
+ 
   DeviceListBloc() : super(const DeviceListState.initial()) {
     on<DeviceListEvent>((event, emit) async {
       switch (event) {
@@ -17,8 +23,10 @@ class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
           await _onStarted(event, emit);
         case _Searched():
           await _onSearched(event, emit);
+        case _LoadMore():
+          await _onLoadMore(emit);
         case _SelectedAll():
-          _onSelectedAll(event, emit);
+          _onSelectedAll(emit);
         case _SelectedDevice():
           _onSelectedDevice(event, emit);
         case _Added():
@@ -27,53 +35,110 @@ class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
           await _onUpdated(event, emit);
         case _Deleted():
           await _onDeleted(event, emit);
+        case _BulkDeleted():
+          await _onBulkDeleted(emit);
         case _Imported():
           await _onImported(event, emit);
       }
     });
   }
-
+ 
+  Future<(List<DeviceModel>?, String?)> _fetch(int page) =>
+      deviceRepo.getDevices(
+        serialNumber: _serialNumber,
+        status: _status,
+        modelType: _modelType,
+        location: _location,
+        page: page,
+      );
+ 
+  bool _reachedEnd(List<DeviceModel> page) =>
+      page.length < DeviceRepository.pageSize;
+ 
   Future<void> _onStarted(_Started event, Emitter<DeviceListState> emit) async {
-    emit(state.copyWith(isLoading: true, errorMessage: ''));
-    final (data, error) = await deviceRepo.getDevices(
-      serialNumber: event.serialNumber,
-      status: event.status,
-      modelType: event.modelType,
-      location: event.location,
-      page: event.page,
-    );
+    _serialNumber = event.serialNumber;
+    _status       = event.status;
+    _modelType    = event.modelType;
+    _location     = event.location;
+ 
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: '',
+      currentPage: 1,
+      hasMore: true,
+      devices: [],
+      selectedIds: [],
+    ));
+ 
+    final (data, error) = await _fetch(1);
     if (error != null) {
       emit(state.copyWith(isLoading: false, errorMessage: error));
       return;
     }
-    if (data != null) {
-      emit(state.copyWith(isLoading: false, devices: data));
-    }
+    emit(state.copyWith(
+      isLoading: false,
+      devices: data!,
+      currentPage: 1,
+      hasMore: !_reachedEnd(data),
+    ));
   }
-
+ 
   Future<void> _onSearched(
     _Searched event,
     Emitter<DeviceListState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, errorMessage: ''));
-    final (data, error) = await deviceRepo.getDevices(
-      serialNumber: event.serialNumber,
-    );
+    _serialNumber = event.serialNumber.isEmpty ? null : event.serialNumber;
+    _status = null;
+    _modelType = null;
+    _location = null;
+ 
+    emit(state.copyWith(
+      isLoading: true,
+      errorMessage: '',
+      currentPage: 1,
+      hasMore: true,
+      devices: [],
+      selectedIds: [],
+    ));
+ 
+    final (data, error) = await _fetch(1);
     if (error != null) {
       emit(state.copyWith(isLoading: false, errorMessage: error));
       return;
     }
-    if (data != null) {
-      emit(state.copyWith(isLoading: false, devices: data));
-    }
+    emit(state.copyWith(
+      isLoading: false,
+      devices: data!,
+      currentPage: 1,
+      hasMore: !_reachedEnd(data),
+    ));
   }
-
-  void _onSelectedAll(_SelectedAll event, Emitter<DeviceListState> emit) {
+ 
+  Future<void> _onLoadMore(Emitter<DeviceListState> emit) async {
+    if (!state.hasMore || state.isLoadingMore || state.isLoading) return;
+ 
+    final nextPage = state.currentPage + 1;
+    emit(state.copyWith(isLoadingMore: true, errorMessage: ''));
+ 
+    final (data, error) = await _fetch(nextPage);
+    if (error != null) {
+      emit(state.copyWith(isLoadingMore: false, errorMessage: error));
+      return;
+    }
+    emit(state.copyWith(
+      isLoadingMore: false,
+      devices: [...state.devices, ...data!],
+      currentPage: nextPage,
+      hasMore: !_reachedEnd(data),
+    ));
+  }
+ 
+  void _onSelectedAll(Emitter<DeviceListState> emit) {
     final allIds = state.devices.map((d) => d.id).toList();
     final allSelected = allIds.every((id) => state.selectedIds.contains(id));
     emit(state.copyWith(selectedIds: allSelected ? [] : allIds));
   }
-
+ 
   void _onSelectedDevice(_SelectedDevice event, Emitter<DeviceListState> emit) {
     final updated = List<String>.from(state.selectedIds);
     if (updated.contains(event.id)) {
@@ -83,7 +148,7 @@ class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
     }
     emit(state.copyWith(selectedIds: updated));
   }
-
+ 
   Future<void> _onAdded(_Added event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
     final error = await deviceRepo.addDevice(event.data);
@@ -91,47 +156,21 @@ class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
       emit(state.copyWith(isLoading: false, errorMessage: error));
       return;
     }
-    final (data, fetchError) = await deviceRepo.getDevices();
-    if (fetchError != null) {
-      emit(state.copyWith(isLoading: false, errorMessage: fetchError));
-      return;
-    }
-    if (data != null) {
-      emit(
-        state.copyWith(
-          isLoading: false,
-          isSuccess: true,
-          successMessage: 'Device added',
-          devices: data,
-        ),
-      );
-    }
+    add(const DeviceListEvent.started());
+    emit(state.copyWith(isSuccess: true, successMessage: 'Device added'));
   }
-
+ 
   Future<void> _onUpdated(_Updated event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
-    final error = await deviceRepo.updateDevice(event.id, event.data);
+    final error = await deviceRepo.updateDeviceBySerial(event.id, event.data);
     if (error != null) {
       emit(state.copyWith(isLoading: false, errorMessage: error));
       return;
     }
-    final (data, fetchError) = await deviceRepo.getDevices();
-    if (fetchError != null) {
-      emit(state.copyWith(isLoading: false, errorMessage: fetchError));
-      return;
-    }
-    if (data != null) {
-      emit(
-        state.copyWith(
-          isLoading: false,
-          isSuccess: true,
-          successMessage: 'Device updated',
-          devices: data,
-        ),
-      );
-    }
+    add(const DeviceListEvent.started());
+    emit(state.copyWith(isSuccess: true, successMessage: 'Device updated'));
   }
-
+ 
   Future<void> _onDeleted(_Deleted event, Emitter<DeviceListState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
     final error = await deviceRepo.deleteDevice(event.id);
@@ -139,23 +178,32 @@ class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
       emit(state.copyWith(isLoading: false, errorMessage: error));
       return;
     }
-    final (data, fetchError) = await deviceRepo.getDevices();
-    if (fetchError != null) {
-      emit(state.copyWith(isLoading: false, errorMessage: fetchError));
+    add(const DeviceListEvent.started());
+    emit(state.copyWith(isSuccess: true, successMessage: 'Device deleted'));
+  }
+ 
+  Future<void> _onBulkDeleted(Emitter<DeviceListState> emit) async {
+    if (state.selectedIds.isEmpty) return;
+ 
+    final serials = state.devices
+        .where((d) => state.selectedIds.contains(d.id))
+        .map((d) => d.serialNumber)
+        .toList();
+ 
+    emit(state.copyWith(isLoading: true, errorMessage: ''));
+    final error = await deviceRepo.bulkDeleteDevices(serials);
+    if (error != null) {
+      emit(state.copyWith(isLoading: false, errorMessage: error));
       return;
     }
-    if (data != null) {
-      emit(
-        state.copyWith(
-          isLoading: false,
-          isSuccess: true,
-          successMessage: 'Device deleted',
-          devices: data,
-        ),
-      );
-    }
+    add(const DeviceListEvent.started());
+    emit(state.copyWith(
+      isSuccess: true,
+      successMessage: 'Deleted ${serials.length} device${serials.length == 1 ? '' : 's'}',
+      selectedIds: [],
+    ));
   }
-
+ 
   Future<void> _onImported(
     _Imported event,
     Emitter<DeviceListState> emit,
@@ -170,21 +218,17 @@ class DeviceListBloc extends Bloc<DeviceListEvent, DeviceListState> {
       emit(state.copyWith(isLoading: false, errorMessage: result.fatalError!));
       return;
     }
-    final (data, fetchError) = await deviceRepo.getDevices();
     final inserted = result.inserted ?? 0;
     final hasRowErrors = result.errors.isNotEmpty;
-    emit(
-      state.copyWith(
-        isLoading: false,
-        devices: data ?? state.devices,
-        errorMessage: fetchError ?? '',
-        isSuccess: inserted > 0,
-        successMessage: inserted > 0
-            ? 'Imported $inserted device${inserted == 1 ? '' : 's'}'
-                  '${hasRowErrors ? ' (${result.errors.length} row error${result.errors.length == 1 ? '' : 's'})' : ''}'
-            : '',
-        importErrors: result.errors,
-      ),
-    );
+    add(const DeviceListEvent.started());
+    emit(state.copyWith(
+      isLoading: false,
+      isSuccess: inserted > 0,
+      successMessage: inserted > 0
+          ? 'Imported $inserted device${inserted == 1 ? '' : 's'}'
+              '${hasRowErrors ? ' (${result.errors.length} row error${result.errors.length == 1 ? '' : 's'})' : ''}'
+          : '',
+      importErrors: result.errors,
+    ));
   }
 }

@@ -18,17 +18,29 @@ class DeviceListScreen extends StatefulWidget {
 
 class _DeviceListScreenState extends State<DeviceListScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     context.read<DeviceListBloc>().add(const DeviceListEvent.started());
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<DeviceListBloc>().add(const DeviceListEvent.loadMore());
+    }
   }
 
   Future<void> _handleImport(BuildContext context) async {
@@ -49,12 +61,38 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
 
     if (confirmed == true && context.mounted) {
       context.read<DeviceListBloc>().add(
-        DeviceListEvent.importDevices(
-          filePath: file.path,
-          fileBytes: file.bytes,
-          fileName: file.name,
+            DeviceListEvent.importDevices(
+              filePath: file.path,
+              fileBytes: file.bytes,
+              fileName: file.name,
+            ));
+    }
+  }
+
+  Future<void> _confirmBulkDelete(BuildContext context, int count) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Devices'),
+        content: Text(
+          'Are you sure you want to delete $count device${count == 1 ? '' : 's'}? '
+          'This cannot be undone.',
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<DeviceListBloc>().add(const DeviceListEvent.bulkDelete());
     }
   }
 
@@ -73,11 +111,8 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    size: 16,
-                    color: Colors.orange,
-                  ),
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 16, color: Colors.orange),
                   const SizedBox(width: 8),
                   Expanded(child: Text(errors[i])),
                 ],
@@ -102,22 +137,18 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     return BlocListener<DeviceListBloc, DeviceListState>(
       listener: (context, state) {
         if (state.isSuccess && state.successMessage.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.successMessage),
-              backgroundColor: Colors.green.shade700,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.successMessage),
+            backgroundColor: Colors.green.shade700,
+            behavior: SnackBarBehavior.floating,
+          ));
         }
         if (state.errorMessage.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage),
-              backgroundColor: Colors.red.shade700,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.errorMessage),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+          ));
         }
         if (state.importErrors.isNotEmpty) {
           _showImportErrorsDialog(context, state.importErrors);
@@ -150,7 +181,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                       icon: const Icon(Icons.upload_file_outlined, size: 18),
                       label: Text(
                         'Import CSV',
-                        style: textTheme.bodyLarge.medium,
+                        style: textTheme.bodyLarge?.medium,
                       ),
                     ),
                   ),
@@ -160,7 +191,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                     child: FilledButton.icon(
                       onPressed: () => DeviceNewRoute().go(context),
                       icon: const Icon(Icons.add, size: 18),
-                      label: Text('Add Device'),
+                      label: const Text('Add Device'),
                     ),
                   ),
                 ],
@@ -176,16 +207,13 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                   ),
                   child: BlocBuilder<DeviceListBloc, DeviceListState>(
                     builder: (context, state) {
-                      final isAllSelected =
-                          state.devices.isNotEmpty &&
-                          state.devices.every(
-                            (d) => state.selectedIds.contains(d.id),
-                          );
+                      final isAllSelected = state.devices.isNotEmpty &&
+                          state.devices
+                              .every((d) => state.selectedIds.contains(d.id));
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Bulk action bar
                           if (state.selectedIds.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
@@ -194,8 +222,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                   Text(
                                     '(${state.selectedIds.length}/${state.devices.length}) selected',
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                        fontWeight: FontWeight.w500),
                                   ),
                                   const SizedBox(width: 12),
                                   OutlinedButton.icon(
@@ -208,8 +235,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                       );
                                       if (result == true && context.mounted) {
                                         context.read<DeviceListBloc>().add(
-                                          const DeviceListEvent.started(),
-                                        );
+                                            const DeviceListEvent.started());
                                       }
                                     },
                                     icon: const Icon(Icons.settings, size: 16),
@@ -218,13 +244,28 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                       style: textTheme.bodyLarge?.medium,
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red.shade600,
+                                      side: BorderSide(
+                                          color: Colors.red.shade300),
+                                    ),
+                                    onPressed: () => _confirmBulkDelete(
+                                        context, state.selectedIds.length),
+                                    icon: const Icon(Icons.delete_outline,
+                                        size: 16),
+                                    label: Text(
+                                      'Delete Selected',
+                                      style: textTheme.bodyLarge?.medium,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-
-                          // Header row
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4),
                             child: Row(
                               children: [
                                 Expanded(
@@ -232,10 +273,10 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                     children: [
                                       Checkbox(
                                         value: isAllSelected,
-                                        onChanged: (_) =>
-                                            context.read<DeviceListBloc>().add(
-                                              const DeviceListEvent.selectAll(),
-                                            ),
+                                        onChanged: (_) => context
+                                            .read<DeviceListBloc>()
+                                            .add(const DeviceListEvent
+                                                .selectAll()),
                                       ),
                                       const SizedBox(width: 4),
                                       const Text('Select all'),
@@ -246,7 +287,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                 _HeaderCell('Model'),
                                 _HeaderCell('Status'),
                                 _HeaderCell('Location'),
-                                const SizedBox(width: 48), // edit action col
+                                const SizedBox(width: 48),
                               ],
                             ),
                           ),
@@ -267,30 +308,51 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
   }
 
   Widget _buildList(BuildContext context, DeviceListState state) {
-    if (state.isLoading) {
+    if (state.isLoading && state.devices.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.devices.isEmpty) {
       return const Center(child: Text('No devices found.'));
     }
 
+    final itemCount =
+        state.devices.length + (state.hasMore ? 1 : 0);
+
     return ListView.separated(
-      itemCount: state.devices.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      controller: _scrollController,
+      itemCount: itemCount,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
+        if (index == state.devices.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: state.isLoadingMore
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          );
+        }
+
         final device = state.devices[index];
         final isSelected = state.selectedIds.contains(device.id);
 
         return InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: () => DeviceDetailRoute(id: device.id).go(context),
+          onTap: () => DeviceDetailRoute(
+            serialNumber: device.serialNumber,
+          ).go(context),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+            padding:
+                const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isSelected ? Colors.black54 : neutral300,
-              ),
+                  color: isSelected ? Colors.black54 : neutral300),
             ),
             child: Row(
               children: [
@@ -299,9 +361,9 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                     alignment: Alignment.centerLeft,
                     child: Checkbox(
                       value: isSelected,
-                      onChanged: (_) => context.read<DeviceListBloc>().add(
-                        DeviceListEvent.selectDevice(device.id),
-                      ),
+                      onChanged: (_) => context
+                          .read<DeviceListBloc>()
+                          .add(DeviceListEvent.selectDevice(device.id)),
                     ),
                   ),
                 ),
@@ -313,13 +375,17 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                       ? StatusChip(status: device.status!)
                       : const Text('—'),
                 ),
-                Expanded(flex: 2, child: Text(device.currentLocation ?? '—')),
+                Expanded(
+                    flex: 2,
+                    child: Text(device.currentLocation ?? '—')),
                 SizedBox(
                   width: 48,
                   child: IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     tooltip: 'Edit',
-                    onPressed: () => DeviceEditRoute(id: device.id).go(context),
+                    onPressed: () => DeviceEditRoute(
+                      serialNumber: device.serialNumber,
+                    ).go(context),
                   ),
                 ),
               ],
@@ -337,7 +403,8 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Expanded(
-    flex: 2,
-    child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
-  );
+        flex: 2,
+        child: Text(text,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+      );
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lacakind_frontend/data/models/device_model.dart';
 import 'package:lacakind_frontend/layouts/app_scaffold/app_scaffold.dart';
 import 'package:lacakind_frontend/screens/client/clients_screen.dart';
 import 'package:lacakind_frontend/screens/contract/contracts_screen.dart';
@@ -38,10 +37,8 @@ class LoginRoute extends GoRouteData with $LoginRoute {
       routes: [
         TypedGoRoute<DeviceNewRoute>(path: 'new'),
         TypedGoRoute<DeviceDetailRoute>(
-          path: ':id',
-          routes: [
-            TypedGoRoute<DeviceEditRoute>(path: 'edit'),
-          ],
+          path: ':serialNumber',
+          routes: [TypedGoRoute<DeviceEditRoute>(path: 'edit')],
         ),
       ],
     ),
@@ -81,41 +78,42 @@ class DeviceListRoute extends GoRouteData with $DeviceListRoute {
   }
 }
 
-/// /device-list/new — add a new device (no device object needed)
+/// /device-list/new — add a new device.
 @immutable
 class DeviceNewRoute extends GoRouteData with $DeviceNewRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return const NoTransitionPage(
-      child: DeviceFormScreen(device: null),
+      child: DeviceFormScreen(serialNumber: null),
     );
   }
 }
 
+/// /device-list/:serialNumber — device detail.
+/// The screen fetches the device by serial number, so this survives a refresh.
 @immutable
 class DeviceDetailRoute extends GoRouteData with $DeviceDetailRoute {
-  const DeviceDetailRoute({required this.id, this.$extra});
-  final String id;
-  final DeviceModel? $extra;
+  const DeviceDetailRoute({required this.serialNumber});
+  final String serialNumber;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
-      child: DeviceDetailScreen(device: $extra!),
+      child: DeviceDetailScreen(serialNumber: serialNumber),
     );
   }
 }
 
+/// /device-list/:serialNumber/edit — edit an existing device.
 @immutable
 class DeviceEditRoute extends GoRouteData with $DeviceEditRoute {
-  const DeviceEditRoute({required this.id, this.$extra});
-  final String id;
-  final DeviceModel? $extra;
+  const DeviceEditRoute({required this.serialNumber});
+  final String serialNumber;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
-      child: DeviceFormScreen(device: $extra),
+      child: DeviceFormScreen(serialNumber: serialNumber),
     );
   }
 }
@@ -144,7 +142,4 @@ class ContractsRoute extends GoRouteData with $ContractsRoute {
   }
 }
 
-final router = GoRouter(
-  routes: $appRoutes,
-  initialLocation: '/login',
-);
+final router = GoRouter(routes: $appRoutes, initialLocation: '/login');

@@ -4,6 +4,7 @@ part of 'device_form_bloc.dart';
 sealed class DeviceFormState with _$DeviceFormState {
   const factory DeviceFormState.initial({
     String? editingId,
+    String? editingSerial,
     @Default('') String serialNumber,
     @Default('') String modelType,
     DeviceStatus? status,

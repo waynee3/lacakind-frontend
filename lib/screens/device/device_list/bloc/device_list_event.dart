@@ -7,9 +7,9 @@ sealed class DeviceListEvent with _$DeviceListEvent {
     String? status,
     String? modelType,
     String? location,
-    @Default(1) int page,
   }) = _Started;
   const factory DeviceListEvent.onSearch(String serialNumber) = _Searched;
+  const factory DeviceListEvent.loadMore() = _LoadMore;
   const factory DeviceListEvent.selectAll() = _SelectedAll;
   const factory DeviceListEvent.selectDevice(String id) = _SelectedDevice;
   const factory DeviceListEvent.addDevice(Map<String, dynamic> data) = _Added;
@@ -18,9 +18,11 @@ sealed class DeviceListEvent with _$DeviceListEvent {
     Map<String, dynamic> data,
   ) = _Updated;
   const factory DeviceListEvent.deleteDevice(String id) = _Deleted;
+  const factory DeviceListEvent.bulkDelete() = _BulkDeleted;
   const factory DeviceListEvent.importDevices({
     String? filePath,
     Uint8List? fileBytes,
     required String fileName,
   }) = _Imported;
 }
+ 

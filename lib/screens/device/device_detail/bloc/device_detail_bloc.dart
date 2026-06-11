@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lacakind_frontend/container.dart';
 import 'package:lacakind_frontend/data/models/device_model.dart';
 
 part 'device_detail_event.dart';
@@ -11,9 +12,23 @@ class DeviceDetailBloc extends Bloc<DeviceDetailEvent, DeviceDetailState> {
     on<DeviceDetailEvent>((event, emit) async {
       switch (event) {
         case _Started():
-          emit(state.copyWith(device: event.device, isLoading: false));
+          await _onStarted(event, emit);
       }
     });
+  }
+ 
+  Future<void> _onStarted(
+    _Started event,
+    Emitter<DeviceDetailState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true, errorMessage: ''));
+    final (device, error) =
+        await deviceRepo.getDeviceBySerial(event.serialNumber);
+    if (error != null) {
+      emit(state.copyWith(isLoading: false, errorMessage: error));
+      return;
+    }
+    emit(state.copyWith(isLoading: false, device: device));
   }
 }
  

@@ -7,6 +7,8 @@ import 'package:lacakind_frontend/data/models/device_model.dart';
 class DeviceRepository {
   final _dio = ApiClient.dio;
 
+  static const int pageSize = 20;
+
   Future<(List<DeviceModel>?, String?)> getDevices({
     String? serialNumber,
     String? status,
@@ -23,6 +25,7 @@ class DeviceRepository {
           'modelType': ?modelType,
           'location': ?location,
           'page': page,
+          'limit': pageSize,
         },
       ),
     );
@@ -33,9 +36,9 @@ class DeviceRepository {
     return (devices, null);
   }
 
-  Future<(DeviceModel?, String?)> getDeviceById(String id) async {
+  Future<(DeviceModel?, String?)> getDeviceBySerial(String serialNumber) async {
     final (res, error) = await ApiClient.safeCall(
-      () => _dio.get('/devices/$id'),
+      () => _dio.get('/devices/serial/$serialNumber'),
     );
     if (error != null) return (null, error);
     return (DeviceModel.fromJson(res!.data), null);
@@ -48,9 +51,12 @@ class DeviceRepository {
     return error;
   }
 
-  Future<String?> updateDevice(String id, Map<String, dynamic> data) async {
+  Future<String?> updateDeviceBySerial(
+    String serialNumber,
+    Map<String, dynamic> data,
+  ) async {
     final (_, error) = await ApiClient.safeCall(
-      () => _dio.put('/devices/$id', data: data),
+      () => _dio.put('/devices/serial/$serialNumber', data: data),
     );
     return error;
   }
@@ -58,6 +64,16 @@ class DeviceRepository {
   Future<String?> deleteDevice(String id) async {
     final (_, error) = await ApiClient.safeCall(
       () => _dio.delete('/devices/$id'),
+    );
+    return error;
+  }
+
+  Future<String?> bulkDeleteDevices(List<String> serialNumbers) async {
+    final (_, error) = await ApiClient.safeCall(
+      () => _dio.post(
+        '/devices/bulk-delete',
+        data: {'serialNumbers': serialNumbers},
+      ),
     );
     return error;
   }
@@ -76,7 +92,7 @@ class DeviceRepository {
   }
 
   Future<({int? inserted, List<String> errors, String? fatalError})>
-  importDevices({
+      importDevices({
     String? filePath,
     Uint8List? fileBytes,
     required String fileName,
@@ -89,7 +105,6 @@ class DeviceRepository {
           fatalError: 'No CSV file selected',
         );
       }
-
       final csvFile = fileBytes != null
           ? MultipartFile.fromBytes(fileBytes, filename: fileName)
           : await MultipartFile.fromFile(filePath!, filename: fileName);

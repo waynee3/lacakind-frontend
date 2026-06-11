@@ -15,7 +15,7 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
         case _Started():
           emit(const DeviceFormState.initial());
         case _StartedEdit():
-          _onStartedEdit(event, emit);
+          await _onStartedEdit(event, emit);
         case _SerialNumberChanged():
           emit(state.copyWith(serialNumber: event.value));
         case _ModelTypeChanged():
@@ -41,11 +41,22 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
       }
     });
   }
-
-  void _onStartedEdit(_StartedEdit event, Emitter<DeviceFormState> emit) {
-    final d = event.device;
+ 
+  Future<void> _onStartedEdit(
+    _StartedEdit event,
+    Emitter<DeviceFormState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true, errorMessage: ''));
+    final (device, error) =
+        await deviceRepo.getDeviceBySerial(event.serialNumber);
+    if (error != null) {
+      emit(state.copyWith(isLoading: false, errorMessage: error));
+      return;
+    }
+    final d = device!;
     emit(DeviceFormState.initial(
       editingId: d.id,
+      editingSerial: d.serialNumber,
       serialNumber: d.serialNumber,
       modelType: d.modelType ?? '',
       status: d.status,
@@ -58,14 +69,14 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
       warrantyExpiry: d.warrantyExpiry,
     ));
   }
-
+ 
   Future<void> _onSubmitted(Emitter<DeviceFormState> emit) async {
     if (state.serialNumber.trim().isEmpty) {
       emit(state.copyWith(errorMessage: 'Serial number is required'));
       return;
     }
     emit(state.copyWith(isLoading: true, errorMessage: ''));
-
+ 
     final payload = <String, dynamic>{
       'serialNumber': state.serialNumber.trim(),
       if (state.modelType.isNotEmpty) 'modelType': state.modelType.trim(),
@@ -81,20 +92,27 @@ class DeviceFormBloc extends Bloc<DeviceFormEvent, DeviceFormState> {
       if (state.warrantyExpiry != null)
         'warrantyExpiry': state.warrantyExpiry!.toIso8601String(),
     };
-
-    if (state.editingId != null) {
-      final error = await deviceRepo.updateDevice(state.editingId!, payload);
+ 
+    if (state.editingSerial != null) {
+      final error =
+          await deviceRepo.updateDeviceBySerial(state.editingSerial!, payload);
       if (error != null) {
         emit(state.copyWith(isLoading: false, errorMessage: error));
         return;
       }
-      final (updated, fetchError) = await deviceRepo.getDeviceById(state.editingId!);
+      final (updated, fetchError) =
+          await deviceRepo.getDeviceBySerial(state.serialNumber.trim());
       if (fetchError != null) {
         emit(state.copyWith(isLoading: false, errorMessage: fetchError));
         return;
       }
-      emit(state.copyWith(isLoading: false, isSuccess: true, savedDevice: updated));
+      emit(state.copyWith(
+        isLoading: false,
+        isSuccess: true,
+        savedDevice: updated,
+      ));
     } else {
+      // Add
       final error = await deviceRepo.addDevice(payload);
       if (error != null) {
         emit(state.copyWith(isLoading: false, errorMessage: error));
