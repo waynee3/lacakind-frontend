@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lacakind_frontend/extensions/text_ext.dart';
 import 'package:lacakind_frontend/routes/routes.dart';
 import 'package:lacakind_frontend/screens/client/client_list/bloc/client_list_bloc.dart';
 import 'package:lacakind_frontend/styles/color.styles.dart';
@@ -74,7 +75,7 @@ class _ClientListScreenState extends State<ClientListScreen> {
                     child: TextField(
                       controller: _searchController,
                       decoration: const InputDecoration(
-                        hintText: 'Search by Serial Number',
+                        hintText: 'Search by client name',
                         suffixIcon: Icon(Icons.search),
                       ),
                       onSubmitted: (value) => context
@@ -103,7 +104,8 @@ class _ClientListScreenState extends State<ClientListScreen> {
                     border: Border.all(color: neutral300),
                   ),
                   child: BlocBuilder<ClientListBloc, ClientListState>(
-                    buildWhen: (previous, current) => previous.clients != current.clients,
+                    buildWhen: (previous, current) =>
+                        previous.clients != current.clients,
                     builder: (context, state) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,12 +114,42 @@ class _ClientListScreenState extends State<ClientListScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Row(
                               children: [
-                                _HeaderCell('Client name'),
-                                _HeaderCell('Email'),
-                                _HeaderCell('Phone'),
-                                _HeaderCell('Location'),
-                                _HeaderCell('Contact person'),
-                                const SizedBox(width: 48),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    "Client name",
+                                    style: textTheme.bodyMedium.bold,
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    "Email",
+                                    style: textTheme.bodyMedium.bold,
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    "Phone",
+                                    style: textTheme.bodyMedium.bold,
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    "Location",
+                                    style: textTheme.bodyMedium.bold,
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    "Contact person",
+                                    style: textTheme.bodyMedium.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 112),
                               ],
                             ),
                           ),
@@ -170,25 +202,75 @@ class _ClientListScreenState extends State<ClientListScreen> {
 
         return InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: () => DeviceDetailRoute(serialNumber: client.id).go(context),
+          onTap: () => ClientEditRoute(id: client.id).go(context),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: neutral300),
+            ),
             child: Row(
               children: [
                 Expanded(flex: 2, child: Text(client.name)),
-                Expanded(flex: 2, child: Text(client.email)),
-                Expanded(flex: 2, child: Text(client.phone)),
+                Expanded(flex: 1, child: Text(client.email)),
+                Expanded(flex: 1, child: Text(client.phone)),
                 Expanded(flex: 2, child: Text(client.location)),
-                Expanded(flex: 2, child: Text(client.contactPerson)),
-                SizedBox(
-                  width: 48,
-                  child: IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    tooltip: 'Edit',
-                    onPressed: () =>
-                        DeviceEditRoute(serialNumber: client.id).go(context),
-                  ),
+                Expanded(flex: 1, child: Text(client.contactPerson)),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      child: IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        tooltip: 'Edit',
+                        onPressed: () =>
+                            ClientEditRoute(id: client.id).go(context),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    SizedBox(
+                      width: 48,
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.delete_forever_outlined,
+                          size: 18,
+                        ),
+                        tooltip: 'Delete',
+                        onPressed: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Delete Client'),
+                              content: Text(
+                                'Are you sure you want to delete ${client.name}? '
+                                'This cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                  ),
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true && context.mounted) {
+                            context.read<ClientListBloc>().add(
+                              ClientListEvent.deleteClient(client.id),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -197,15 +279,4 @@ class _ClientListScreenState extends State<ClientListScreen> {
       },
     );
   }
-}
-
-class _HeaderCell extends StatelessWidget {
-  final String text;
-  const _HeaderCell(this.text);
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    flex: 2,
-    child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
-  );
 }

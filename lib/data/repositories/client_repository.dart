@@ -35,6 +35,14 @@ class ClientRepository {
     return (clients, null);
   }
 
+  Future<(ClientModel?, String?)> getClientById(String id) async {
+    final (res, error) = await ApiClient.safeCall(
+      () => _dio.get('/clients/$id'),
+    );
+    if (error != null) return (null, error);
+    return (ClientModel.fromJson(res!.data), null);
+  }
+
   Future<ClientModel> addClient(Map<String, dynamic> data) async {
     final res = await _dio.post('/clients', data: data);
     return ClientModel.fromJson(res.data);

@@ -48,7 +48,7 @@ class ClientListBloc extends Bloc<ClientListEvent, ClientListState> {
     _email = event.email;
     _phone = event.phone;
     _location = event.location;
-    _contactPerson = event.location;
+    _contactPerson = event.contactPerson;
 
     emit(
       state.copyWith(
@@ -142,6 +142,6 @@ class ClientListBloc extends Bloc<ClientListEvent, ClientListState> {
       return;
     }
     add(const ClientListEvent.started());
-    emit(state.copyWith(isSuccess: true, successMessage: 'Device deleted'));
+    emit(state.copyWith(isSuccess: true, successMessage: 'Client deleted'));
   }
 }

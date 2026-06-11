@@ -46,7 +46,10 @@ class LoginRoute extends GoRouteData with $LoginRoute {
     ),
     TypedGoRoute<ClientListRoute>(
       path: '/clients',
-      routes: [TypedGoRoute<ClientNewRoute>(path: 'new')],
+      routes: [
+        TypedGoRoute<ClientNewRoute>(path: 'new'),
+        TypedGoRoute<ClientEditRoute>(path: ':id/edit'),
+      ],
     ),
     TypedGoRoute<LifecycleLogRoute>(path: '/lifecycle-log'),
     TypedGoRoute<ContractsRoute>(path: '/contracts'),
@@ -136,6 +139,17 @@ class ClientNewRoute extends GoRouteData with $ClientNewRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return const NoTransitionPage(child: ClientFormScreen());
+  }
+}
+
+@immutable
+class ClientEditRoute extends GoRouteData with $ClientEditRoute {
+  const ClientEditRoute({required this.id});
+  final String id;
+ 
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return NoTransitionPage(child: ClientFormScreen(clientId: id));
   }
 }
 
