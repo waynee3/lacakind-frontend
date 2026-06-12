@@ -85,6 +85,8 @@ class DeviceRepository {
     String? description,
     String? associatedLocation,
     String? relatedReference,
+    String? clientId,
+    String? contractId,
   }) async {
     final bulkOperation = <String, dynamic>{
       'bulkOpId': 'bulk-${DateTime.now().millisecondsSinceEpoch}',
@@ -98,6 +100,8 @@ class DeviceRepository {
         'associatedLocation': associatedLocation,
       if (relatedReference != null && relatedReference.isNotEmpty)
         'relatedReference': relatedReference,
+      if (clientId != null && clientId.isNotEmpty) 'clientId': clientId,
+      if (contractId != null && contractId.isNotEmpty) 'contractId': contractId,
     };
 
     final (_, error) = await ApiClient.safeCall(
