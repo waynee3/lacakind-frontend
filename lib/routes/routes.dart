@@ -13,6 +13,7 @@ import 'package:lacakind_frontend/screens/device/device_detail/device_detail_scr
 import 'package:lacakind_frontend/screens/device/device_form/device_form_screen.dart';
 import 'package:lacakind_frontend/screens/device/device_list/bloc/device_list_bloc.dart';
 import 'package:lacakind_frontend/screens/device/device_list/device_list_screen.dart';
+import 'package:lacakind_frontend/screens/lifecycle/bloc/lifecycle_log_bloc.dart';
 import 'package:lacakind_frontend/screens/lifecycle/lifecycle_log_screen.dart';
 import 'package:lacakind_frontend/screens/login/bloc/login_bloc.dart';
 import 'package:lacakind_frontend/screens/login/login_screen.dart';
@@ -167,7 +168,8 @@ class ContractsRoute extends GoRouteData with $ContractsRoute {
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
       child: BlocProvider(
-        create: (context) => ContractListBloc()..add(ContractListEvent.started()),
+        create: (context) =>
+            ContractListBloc()..add(ContractListEvent.started()),
         child: ContractListScreen(),
       ),
     );
@@ -197,7 +199,12 @@ class ContractEditRoute extends GoRouteData with $ContractEditRoute {
 class LifecycleLogRoute extends GoRouteData with $LifecycleLogRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage(child: LifecycleLogScreen());
+    return NoTransitionPage(
+      child: BlocProvider(
+        create: (context) => LifecycleLogBloc(),
+        child: LifecycleLogScreen(),
+      ),
+    );
   }
 }
 
