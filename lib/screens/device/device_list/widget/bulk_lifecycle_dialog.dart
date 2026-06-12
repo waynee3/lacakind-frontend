@@ -364,7 +364,7 @@ class _Footer extends StatelessWidget {
             flex: 2,
             child: SizedBox(
               height: 44,
-              child: FilledButton.icon(
+              child: OutlinedButton.icon(
                 onPressed: isLoading ? null : onApply,
                 icon: isLoading
                     ? const SizedBox(
@@ -378,8 +378,7 @@ class _Footer extends StatelessWidget {
                     : const Icon(Icons.check, size: 18),
                 label: Text(
                   'Apply Changes',
-                  style: textTheme.bodyLarge?.medium
-                      ?.copyWith(color: Colors.white),
+                  style: textTheme.bodyLarge?.medium,
                 ),
               ),
             ),

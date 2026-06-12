@@ -390,7 +390,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isSelected ? Colors.black54 : neutral300,
+                color: neutral300,
               ),
             ),
             child: Row(
