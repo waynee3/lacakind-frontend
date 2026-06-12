@@ -88,7 +88,7 @@ class _ContractListScreenState extends State<ContractListScreen> {
                     height: 44,
                     child: FilledButton.icon(
                       onPressed: () {
-                        // ContractNewRoute().go(context);
+                        ContractNewRoute().go(context);
                       },
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text('Add contract'),
@@ -187,106 +187,113 @@ class _ContractListScreenState extends State<ContractListScreen> {
 
     final itemCount = state.contracts.length + (state.hasMore ? 1 : 0);
 
-    return ListView.separated(
-      controller: _scrollController,
-      itemCount: itemCount,
-      separatorBuilder: (_, index) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        if (index == state.contracts.length) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Center(
-              child: state.isLoadingMore
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          );
-        }
-
-        final contract = state.contracts[index];
-
-        return InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () => ContractEditRoute(id: contract.id).go(context),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: neutral300),
-            ),
-            child: Row(
-              children: [
-                Expanded(flex: 2, child: Text(contract.contractId)),
-                Expanded(flex: 1, child: Text(contract.contractType)),
-                Expanded(
-                  flex: 1,
-                  child: Text("${contract.startDate} - ${contract.endDate}"),
+    return BlocBuilder<ContractListBloc, ContractListState>(
+      buildWhen: (previous, current) => previous.contracts != current.contracts,
+      builder: (context, state) {
+        return ListView.separated(
+          controller: _scrollController,
+          itemCount: itemCount,
+          separatorBuilder: (_, index) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            if (index == state.contracts.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: state.isLoadingMore
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const SizedBox.shrink(),
                 ),
-                Expanded(flex: 2, child: Text(contract.status)),
-                Expanded(flex: 1, child: Text(contract.paymentStatus)),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 48,
-                      child: IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        tooltip: 'Edit',
-                        onPressed: () =>
-                            ContractEditRoute(id: contract.id).go(context),
-                      ),
+              );
+            }
+
+            final contract = state.contracts[index];
+
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: neutral300),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      "${contract.contractId} (${contract.contractRef})",
                     ),
-                    SizedBox(width: 8),
-                    SizedBox(
-                      width: 48,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.delete_forever_outlined,
-                          size: 18,
+                  ),
+                  Expanded(flex: 2, child: Text(contract.clientName ?? "-")),
+                  Expanded(flex: 1, child: Text(contract.contractType)),
+                  Expanded(
+                    flex: 2,
+                    child: Text("${contract.startDate} - ${contract.endDate}"),
+                  ),
+                  Expanded(flex: 1, child: Text(contract.status)),
+                  Expanded(flex: 1, child: Text(contract.paymentStatus)),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 48,
+                        child: IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          tooltip: 'Edit',
+                          onPressed: () =>
+                              ContractEditRoute(id: contract.id).go(context),
                         ),
-                        tooltip: 'Delete',
-                        onPressed: () async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete contract'),
-                              content: Text(
-                                'Are you sure you want to delete ${contract.contractId}? '
-                                'This cannot be undone.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.of(context).pop(false),
-                                  child: const Text('Cancel'),
-                                ),
-                                FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  onPressed: () =>
-                                      Navigator.of(context).pop(true),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirmed == true && context.mounted) {
-                            context.read<ContractListBloc>().add(
-                              ContractListEvent.deleteContract(contract.id),
-                            );
-                          }
-                        },
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+                      SizedBox(width: 8),
+                      SizedBox(
+                        width: 48,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.delete_forever_outlined,
+                            size: 18,
+                          ),
+                          tooltip: 'Delete',
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete contract'),
+                                content: Text(
+                                  'Are you sure you want to delete ${contract.contractId}? '
+                                  'This cannot be undone.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                    ),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true && context.mounted) {
+                              context.read<ContractListBloc>().add(
+                                ContractListEvent.deleteContract(contract.id),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );

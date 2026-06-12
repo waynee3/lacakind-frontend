@@ -6,6 +6,17 @@ class ClientRepository {
 
   static const int pageSize = 20;
 
+Future<(List<ClientModel>?, String?)> getAllClients() async {
+  final (res, error) = await ApiClient.safeCall(
+    () => _dio.get('/clients', queryParameters: {'limit': 999}),
+  );
+  if (error != null) return (null, error);
+  return (
+    (res!.data as List).map((e) => ClientModel.fromJson(e)).toList(),
+    null,
+  );
+}
+
   Future<(List<ClientModel>?, String?)> getClients({
     String? clientName,
     String? email,
