@@ -5,7 +5,8 @@ import 'package:lacakind_frontend/layouts/app_scaffold/app_scaffold.dart';
 import 'package:lacakind_frontend/screens/client/client_form/client_form_screen.dart';
 import 'package:lacakind_frontend/screens/client/client_list/bloc/client_list_bloc.dart';
 import 'package:lacakind_frontend/screens/client/client_list/clients_list_screen.dart';
-import 'package:lacakind_frontend/screens/contract/contracts_screen.dart';
+import 'package:lacakind_frontend/screens/contract/contract_list/bloc/contract_list_bloc.dart';
+import 'package:lacakind_frontend/screens/contract/contract_list/contract_list_screen.dart';
 import 'package:lacakind_frontend/screens/dashboard/dashboard_screen.dart';
 import 'package:lacakind_frontend/screens/device/device_detail/device_detail_screen.dart';
 import 'package:lacakind_frontend/screens/device/device_form/device_form_screen.dart';
@@ -51,8 +52,14 @@ class LoginRoute extends GoRouteData with $LoginRoute {
         TypedGoRoute<ClientEditRoute>(path: ':id/edit'),
       ],
     ),
+    TypedGoRoute<ContractsRoute>(
+      path: '/contracts',
+      routes: [
+        // TypedGoRoute<ContractNewRoute>(path: 'new'),
+        TypedGoRoute<ContractEditRoute>(path: ':id/edit'),
+      ],
+    ),
     TypedGoRoute<LifecycleLogRoute>(path: '/lifecycle-log'),
-    TypedGoRoute<ContractsRoute>(path: '/contracts'),
   ],
 )
 @immutable
@@ -127,7 +134,7 @@ class ClientListRoute extends GoRouteData with $ClientListRoute {
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
       child: BlocProvider(
-        create: (context) => ClientListBloc(),
+        create: (context) => ClientListBloc()..add(ClientListEvent.started()),
         child: ClientListScreen(),
       ),
     );
@@ -146,7 +153,39 @@ class ClientNewRoute extends GoRouteData with $ClientNewRoute {
 class ClientEditRoute extends GoRouteData with $ClientEditRoute {
   const ClientEditRoute({required this.id});
   final String id;
- 
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return NoTransitionPage(child: ClientFormScreen(clientId: id));
+  }
+}
+
+@immutable
+class ContractsRoute extends GoRouteData with $ContractsRoute {
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return NoTransitionPage(
+      child: BlocProvider(
+        create: (context) => ContractListBloc()..add(ContractListEvent.started()),
+        child: ContractListScreen(),
+      ),
+    );
+  }
+}
+
+// @immutable
+// class ContractNewRoute extends GoRouteData with $ContractNewRoute {
+//   @override
+//   Page<void> buildPage(BuildContext context, GoRouterState state) {
+//     return const NoTransitionPage(child: ContractFormScreen());
+//   }
+// }
+
+@immutable
+class ContractEditRoute extends GoRouteData with $ContractEditRoute {
+  const ContractEditRoute({required this.id});
+  final String id;
+
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(child: ClientFormScreen(clientId: id));
@@ -158,14 +197,6 @@ class LifecycleLogRoute extends GoRouteData with $LifecycleLogRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return const NoTransitionPage(child: LifecycleLogScreen());
-  }
-}
-
-@immutable
-class ContractsRoute extends GoRouteData with $ContractsRoute {
-  @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage(child: ContractsScreen());
   }
 }
 
