@@ -139,7 +139,10 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text('Devices', style: textTheme.titleLarge?.semibold),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
@@ -271,7 +274,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                             TextButton(
                                               onPressed: () => Navigator.of(
                                                 dialogContext,
-                                              ).pop(false), 
+                                              ).pop(false),
                                               child: const Text('Cancel'),
                                             ),
                                             FilledButton(
@@ -280,7 +283,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                               ),
                                               onPressed: () => Navigator.of(
                                                 dialogContext,
-                                              ).pop(true), 
+                                              ).pop(true),
                                               child: const Text('Delete'),
                                             ),
                                           ],
@@ -389,9 +392,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: neutral300,
-              ),
+              border: Border.all(color: neutral300),
             ),
             child: Row(
               children: [

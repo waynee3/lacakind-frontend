@@ -68,7 +68,7 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
   Future<void> _loadDropdowns() async {
     if (_clients.isNotEmpty) return; 
     setState(() => _loadingDropdowns = true);
-    final (clients, _) = await clientRepo.getClients();
+    final (clients, _) = await clientRepo.getAllClients();
     final (contracts, _) = await contractRepo.getContracts();
     
     if (!mounted) return;

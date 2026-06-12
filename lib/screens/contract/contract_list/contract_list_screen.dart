@@ -68,7 +68,10 @@ class _ContractListScreenState extends State<ContractListScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text('Contracts', style: textTheme.titleLarge?.semibold),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(

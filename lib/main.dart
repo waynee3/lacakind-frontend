@@ -5,7 +5,7 @@ import 'package:lacakind_frontend/routes/routes.dart';
 import 'package:lacakind_frontend/styles/theme_cubit.dart';
 import 'package:scaled_app/scaled_app.dart';
 
-const double widthOfDesign = 1920;
+const double widthOfDesign = 1632;
 
 void main() async {
   ScaledWidgetsFlutterBinding.ensureInitialized(

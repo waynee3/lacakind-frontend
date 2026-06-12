@@ -29,7 +29,7 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
   @override
   void initState() {
     super.initState();
-    _endDate = DateTime.now();
+    _endDate   = DateTime.now();
     _startDate = _endDate.subtract(const Duration(hours: 24));
     _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _fire());
@@ -52,24 +52,18 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
   }
 
   void _fire() {
-    final isSerial =
-        _searchQuery.isNotEmpty &&
-        RegExp(
-          r'^[A-Z0-9\-]{4,}$',
-          caseSensitive: false,
-        ).hasMatch(_searchQuery);
+    final isSerial = _searchQuery.isNotEmpty &&
+        RegExp(r'^[A-Z0-9\-]{4,}$', caseSensitive: false)
+            .hasMatch(_searchQuery);
 
-    context.read<LifecycleLogBloc>().add(
-      LifecycleLogEvent.started(
-        serialNumber: isSerial ? _searchQuery : null,
-        clientName: (!isSerial && _searchQuery.isNotEmpty)
-            ? _searchQuery
-            : null,
-        action: _actionFilter?.name,
-        startDate: _startDate,
-        endDate: _endDate,
-      ),
-    );
+    context.read<LifecycleLogBloc>().add(LifecycleLogEvent.started(
+          serialNumber: isSerial ? _searchQuery : null,
+          clientName:
+              (!isSerial && _searchQuery.isNotEmpty) ? _searchQuery : null,
+          action: _actionFilter?.name,
+          startDate: _startDate,
+          endDate: _endDate,
+        ));
   }
 
   Future<void> _pickDateRange() async {
@@ -83,13 +77,8 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
     if (picked != null && mounted) {
       setState(() {
         _startDate = picked.start;
-        _endDate = DateTime(
-          picked.end.year,
-          picked.end.month,
-          picked.end.day,
-          23,
-          59,
-          59,
+        _endDate   = DateTime(
+          picked.end.year, picked.end.month, picked.end.day, 23, 59, 59,
         );
       });
       _fire();
@@ -105,7 +94,7 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
 
   void _clearDate() {
     setState(() {
-      _endDate = DateTime.now();
+      _endDate   = DateTime.now();
       _startDate = _endDate.subtract(const Duration(hours: 24));
     });
     _fire();
@@ -157,9 +146,8 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
                         children: [
                           Text(
                             state.errorMessage,
-                            style: textTheme.bodyMedium?.withColor(
-                              Colors.red.shade600,
-                            ),
+                            style: textTheme.bodyMedium
+                                ?.withColor(Colors.red.shade600),
                           ),
                           const SizedBox(height: 12),
                           OutlinedButton(
@@ -180,14 +168,16 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'No lifecycle events found',
-                            style: textTheme.bodyMedium,
+                            style:
+                                textTheme.bodyMedium?.withColor(neutral500),
                           ),
                         ],
                       ),
                     );
                   }
 
-                  final itemCount = state.logs.length + (state.hasMore ? 1 : 0);
+                  final itemCount =
+                      state.logs.length + (state.hasMore ? 1 : 0);
 
                   return ListView.separated(
                     controller: _scrollCtrl,
@@ -203,14 +193,16 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
                                     width: 24,
                                     height: 24,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
+                                        strokeWidth: 2),
                                   )
                                 : const SizedBox.shrink(),
                           ),
                         );
                       }
-                      return _LogTile(log: state.logs[i], textTheme: textTheme);
+                      return _LogTile(
+                        log: state.logs[i],
+                        textTheme: textTheme,
+                      );
                     },
                   );
                 },
@@ -221,7 +213,6 @@ class _LifecycleLogScreenState extends State<LifecycleLogScreen> {
       ),
     );
   }
-
 
   Widget _buildFilterChips(TextTheme textTheme) {
     final isDefaultRange =
@@ -270,7 +261,7 @@ class _LogTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final actionLabel = log.action?.label ?? log.actionRaw;
     final deviceCount = log.affectedDevices.length;
-    final color = _actionColor(log.action);
+    final color       = _actionColor(log.action);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -281,10 +272,12 @@ class _LogTile extends StatelessWidget {
             width: 10,
             height: 10,
             margin: const EdgeInsets.only(top: 5),
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,58 +286,57 @@ class _LogTile extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
+                        color: color.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         actionLabel,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '$deviceCount device${deviceCount == 1 ? '' : 's'}',
-                      style: textTheme.bodySmall,
+                      style: textTheme.bodySmall?.withColor(neutral500),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 _DeviceChips(
-                  serials: log.affectedDevices,
-                  textTheme: textTheme,
-                ),
+                    serials: log.affectedDevices,
+                    textTheme: textTheme),
                 if (log.associatedLocation.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 12,
-                        color: neutral500,
-                      ),
+                      Icon(Icons.location_on_outlined,
+                          size: 12, color: neutral500),
                       const SizedBox(width: 4),
-                      Text(
-                        log.associatedLocation,
-                        style: textTheme.bodySmall,
-                      ),
+                      Text(log.associatedLocation,
+                          style:
+                              textTheme.bodySmall?.withColor(neutral500)),
                     ],
                   ),
                 ],
+
                 if (log.description.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(
-                    log.description,
-                    style: textTheme.bodySmall,
-                  ),
+                  Text(log.description,
+                      style: textTheme.bodySmall?.withColor(neutral600)),
                 ],
                 const SizedBox(height: 4),
+
+                // Timestamp + by
                 Row(
                   children: [
                     Text(
                       _dateFmt.format(log.timestamp),
-                      style: textTheme.bodySmall,
+                      style: textTheme.bodySmall?.withColor(neutral500),
                     ),
                     Text(
                       ' · ${_timeFmt.format(log.timestamp)}',
@@ -353,7 +345,7 @@ class _LogTile extends StatelessWidget {
                     const Spacer(),
                     Text(
                       'by ${log.createdBy}',
-                      style: textTheme.bodySmall,
+                      style: textTheme.bodySmall?.withColor(neutral500),
                     ),
                   ],
                 ),
@@ -369,18 +361,24 @@ class _LogTile extends StatelessWidget {
     switch (action) {
       case BulkOperationAction.deployment:
       case BulkOperationAction.swapdeployment:
-        return const Color(0xFF166534);
+        return const Color(0xFF16A34A); // green
       case BulkOperationAction.maintenancestart:
-        return const Color(0xFF9A3412);
+        return const Color(0xFFEA580C); // orange
       case BulkOperationAction.retirement:
       case BulkOperationAction.bulkDelete:
-        return const Color(0xFF991B1B);
+        return const Color(0xFFDC2626); // red
       case BulkOperationAction.returnFromClient:
-        return const Color(0xFF1E40AF);
+        return const Color(0xFF7C3AED); // purple
+      case BulkOperationAction.procurementarrival:
+        return const Color(0xFF0369A1); // blue
+      case BulkOperationAction.warehousestorage:
+        return const Color(0xFF0891B2); // cyan
+      case BulkOperationAction.maintenancecomplete:
+        return const Color(0xFF059669); // teal
       case BulkOperationAction.bulkImport:
-        return const Color(0xFF1E40AF);
+        return const Color(0xFF6366F1); // indigo
       default:
-        return neutral500;
+        return neutral400;
     }
   }
 }
@@ -392,7 +390,7 @@ class _DeviceChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const max = 3;
+    const max   = 3;
     final shown = serials.take(max).toList();
     final extra = serials.length - max;
 
@@ -400,24 +398,20 @@ class _DeviceChips extends StatelessWidget {
       spacing: 4,
       runSpacing: 2,
       children: [
-        ...shown.map(
-          (s) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: neutral300)
-            ),
-            child: Text(
-              s,
-              style: textTheme.bodySmall,
-            ),
-          ),
-        ),
+        ...shown.map((s) => Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: neutral100,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(s,
+                  style: textTheme.bodySmall
+                      ?.copyWith(fontFamily: 'monospace')),
+            )),
         if (extra > 0)
-          Text(
-            '+$extra more',
-            style: textTheme.bodySmall,
-          ),
+          Text('+$extra more',
+              style: textTheme.bodySmall?.withColor(neutral500)),
       ],
     );
   }

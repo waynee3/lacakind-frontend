@@ -116,16 +116,24 @@ class RecentActivity extends StatelessWidget {
     switch (action.toLowerCase()) {
       case 'deployment':
       case 'swapdeployment':
-        return const Color(0xFF16A34A);
+        return const Color(0xFF16A34A); 
       case 'maintenancestart':
         return const Color(0xFFEA580C);
       case 'retirement':
       case 'bulk_delete':
-        return const Color(0xFFDC2626);
+        return const Color(0xFFDC2626); 
       case 'return':
-        return const Color(0xFF7C3AED);
+        return const Color(0xFF7C3AED); 
+      case 'procurementarrival':
+        return const Color(0xFF0369A1);
+      case 'warehousestorage':
+        return const Color(0xFF0891B2);
+      case 'maintenancecomplete':
+        return const Color(0xFF059669);
+      case 'bulk_import':
+        return const Color(0xFF6366F1);
       default:
-        return neutral500;
+        return neutral400;
     }
   }
 }

@@ -128,7 +128,7 @@ class AppScaffold extends StatelessWidget {
           children: [
             SizedBox(
               height: double.infinity,
-              width: 280,
+              width: 240,
               child: SingleChildScrollView(child: const AppDrawer()),
             ),
             VerticalDivider(width: 1, thickness: 1, color: neutral200),

@@ -28,32 +28,32 @@ class AppDrawer extends StatelessWidget {
         ),
         NavigationItem(
           label: "Devices",
-          icon: Icons.dashboard_outlined,
-          iconActive: Icons.dashboard,
+          icon: Icons.devices_outlined,
+          iconActive: Icons.devices,
           location: deviceLoc,
           onClick: () => DeviceListRoute().go(context),
           currentLocation: current,
         ),
         NavigationItem(
           label: "Clients",
-          icon: Icons.dashboard_outlined,
-          iconActive: Icons.dashboard,
+          icon: Icons.supervised_user_circle_outlined,
+          iconActive: Icons.supervised_user_circle,
           location: clientsLoc,
           onClick: () => ClientListRoute().go(context),
           currentLocation: current,
         ),
         NavigationItem(
           label: "Contracts",
-          icon: Icons.dashboard_outlined,
-          iconActive: Icons.dashboard,
+          icon: Icons.file_present_outlined,
+          iconActive: Icons.file_present,
           location: contractsLoc,
           onClick: () => ContractsRoute().go(context),
           currentLocation: current,
         ),
         NavigationItem(
           label: "Lifecycle Log",
-          icon: Icons.dashboard_outlined,
-          iconActive: Icons.dashboard,
+          icon: Icons.receipt_long_outlined,
+          iconActive: Icons.receipt_long,
           location: lifecycleLogLoc,
           onClick: () => LifecycleLogRoute().go(context),
           currentLocation: current,
@@ -70,7 +70,6 @@ class NavigationItem extends StatelessWidget {
   final String location;
   final String currentLocation;
 
-  // if iconActive is not null, the icon will be replaced with iconActive when the item is active
   final IconData? iconActive;
 
   const NavigationItem({
@@ -99,7 +98,7 @@ class NavigationItem extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: isActive ? textTheme.bodyMedium.bold : textTheme.bodyMedium,
+          style: isActive ? textTheme.bodyLarge.bold : textTheme.bodyLarge,
         ),
         leading: Icon(
           (isActive && iconActive != null) ? iconActive : icon,

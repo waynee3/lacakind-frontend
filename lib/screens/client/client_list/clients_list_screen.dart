@@ -68,7 +68,10 @@ class _ClientListScreenState extends State<ClientListScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text('Clients', style: textTheme.titleLarge?.semibold),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
