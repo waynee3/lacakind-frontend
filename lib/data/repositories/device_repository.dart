@@ -15,6 +15,7 @@ class DeviceRepository {
     String? modelType,
     String? location,
     int page = 1,
+    int? limit,
   }) async {
     final (res, error) = await ApiClient.safeCall(
       () => _dio.get(
@@ -25,7 +26,7 @@ class DeviceRepository {
           'modelType': ?modelType,
           'location': ?location,
           'page': page,
-          'limit': pageSize,
+          'limit': limit ?? pageSize,
         },
       ),
     );
@@ -87,13 +88,14 @@ class DeviceRepository {
     String? relatedReference,
     String? clientId,
     String? contractId,
+    String? spareSerial,
   }) async {
     final bulkOperation = <String, dynamic>{
-      'bulkOpId': 'bulk-${DateTime.now().millisecondsSinceEpoch}',
-      'action': action,
-      'affectedDevices': serialNumbers,
-      'createdBy': createdBy,
-      'timestamp': DateTime.now().toIso8601String(),
+      'bulkOpId':         'bulk-${DateTime.now().millisecondsSinceEpoch}',
+      'action':           action,
+      'affectedDevices':  serialNumbers,
+      'createdBy':        createdBy,
+      'timestamp':        DateTime.now().toIso8601String(),
       if (description != null && description.isNotEmpty)
         'description': description,
       if (associatedLocation != null && associatedLocation.isNotEmpty)
@@ -102,6 +104,8 @@ class DeviceRepository {
         'relatedReference': relatedReference,
       if (clientId != null && clientId.isNotEmpty) 'clientId': clientId,
       if (contractId != null && contractId.isNotEmpty) 'contractId': contractId,
+      if (spareSerial != null && spareSerial.isNotEmpty)
+        'spareCloneData': {'serialNumber': spareSerial},
     };
 
     final (_, error) = await ApiClient.safeCall(

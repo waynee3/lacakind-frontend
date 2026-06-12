@@ -214,18 +214,17 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                   const SizedBox(width: 12),
                                   OutlinedButton.icon(
                                     onPressed: () async {
-                                      final serials = state.devices
+                                      final selectedDevices = state.devices
                                           .where(
                                             (d) => state.selectedIds.contains(
                                               d.id,
                                             ),
                                           )
-                                          .map((d) => d.serialNumber)
                                           .toList();
                                       final result = await showDialog<bool>(
                                         context: context,
                                         builder: (_) => BulkLifecycleDialog(
-                                          serialNumbers: serials,
+                                          selectedDevices: selectedDevices,
                                         ),
                                       );
                                       if (result == true && context.mounted) {
@@ -234,7 +233,7 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              'Lifecycle event applied to ${serials.length} device${serials.length == 1 ? '' : 's'}',
+                                              'Lifecycle event applied to ${selectedDevices.length} device${selectedDevices.length == 1 ? '' : 's'}',
                                             ),
                                             backgroundColor:
                                                 Colors.green.shade700,

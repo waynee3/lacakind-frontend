@@ -6,6 +6,17 @@ class ContractRepository {
 
   static const int pageSize = 20;
 
+  Future<(List<ContractModel>?, String?)> getAllContracts() async {
+    final (res, error) = await ApiClient.safeCall(
+      () => _dio.get('/contracts', queryParameters: {'limit': 999, 'page': 1}),
+    );
+    if (error != null) return (null, error);
+    final contracts = (res!.data as List)
+        .map((e) => ContractModel.fromJson(e))
+        .toList();
+    return (contracts, null);
+  }
+
   Future<(List<ContractModel>?, String?)> getContracts({
     String? contractId,
     String? clientName,
@@ -20,15 +31,15 @@ class ContractRepository {
       () => _dio.get(
         '/contracts',
         queryParameters: {
-          'contractId': ?contractId,
-          'clientName': ?clientName,
-          'contractType': ?contractType,
-          'startDate': ?startDate,
-          'endDate': ?endDate,
-          'status': ?status,
+          'contractId':    ?contractId,
+          'clientName':    ?clientName,
+          'contractType':  ?contractType,
+          'startDate':     ?startDate,
+          'endDate':       ?endDate,
+          'status':        ?status,
           'paymentStatus': ?paymentStatus,
-          'page': page,
-          'limit': pageSize,
+          'page':          page,
+          'limit':         pageSize,
         },
       ),
     );
