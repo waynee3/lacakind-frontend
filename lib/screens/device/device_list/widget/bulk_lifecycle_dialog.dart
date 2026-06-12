@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lacakind_frontend/container.dart';
 import 'package:lacakind_frontend/data/enums/device_event_type.dart';
-import 'package:lacakind_frontend/data/enums/device_status.dart';
 import 'package:lacakind_frontend/data/models/client_model.dart';
 import 'package:lacakind_frontend/data/models/contract_model.dart';
 import 'package:lacakind_frontend/data/models/device_model.dart';
@@ -10,7 +9,6 @@ import 'package:lacakind_frontend/styles/color.styles.dart';
 import 'package:lacakind_frontend/widgets/label_dropdown.dart';
 import 'package:lacakind_frontend/widgets/label_text_field.dart';
 
-// ── Status → allowed next events ─────────────────────────────────────────────
 const _allowedEvents = <String, List<DeviceEventType>>{
   'InStock': [
     DeviceEventType.procurementArrival,
@@ -56,21 +54,17 @@ const _allowedEvents = <String, List<DeviceEventType>>{
   'Retired': [],
 };
 
-// Events that require client + contract
 const _clientRequired = {
   DeviceEventType.deployment,
   DeviceEventType.swapDeployment,
 };
 
-// Events that require a manual location input
 const _locationRequired = {
   DeviceEventType.deployment,
   DeviceEventType.swapDeployment,
   DeviceEventType.maintenanceComplete,
 };
 
-/// Compute the intersection of allowed events for a set of device statuses.
-/// If devices have different statuses, only show events valid for ALL of them.
 List<DeviceEventType> _allowedForDevices(List<DeviceModel> devices) {
   if (devices.isEmpty) return DeviceEventType.values.toList();
 
@@ -84,11 +78,7 @@ List<DeviceEventType> _allowedForDevices(List<DeviceModel> devices) {
   return (result ?? {}).toList();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 class BulkLifecycleDialog extends StatefulWidget {
-  /// Full DeviceModel objects of the selected devices (not just serial numbers)
-  /// so we can derive allowed events from their current statuses.
   final List<DeviceModel> selectedDevices;
 
   const BulkLifecycleDialog({super.key, required this.selectedDevices});
@@ -100,14 +90,12 @@ class BulkLifecycleDialog extends StatefulWidget {
 class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
   DeviceEventType? _eventType;
 
-  // Client / contract (deployment events)
   List<ClientModel>   _clients   = [];
   List<ContractModel> _contracts = [];
   ClientModel?   _selectedClient;
   ContractModel? _selectedContract;
   bool _loadingDropdowns = false;
 
-  // Swap spare device
   List<DeviceModel> _warehouseDevices = [];
   DeviceModel?      _selectedSpare;
   bool _loadingSpares = false;
@@ -129,7 +117,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
     super.dispose();
   }
 
-  // ── Computed ──────────────────────────────────────────────────────────────
   List<DeviceEventType> get _allowed =>
       _allowedForDevices(widget.selectedDevices);
 
@@ -140,8 +127,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
   List<ContractModel> get _filteredContracts => _selectedClient == null
       ? _contracts
       : _contracts.where((c) => c.clientId == _selectedClient!.id).toList();
-
-  // ── Data loading ──────────────────────────────────────────────────────────
 
   Future<void> _loadClientDropdowns() async {
     if (_clients.isNotEmpty) return;
@@ -159,7 +144,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
   Future<void> _loadWarehouseDevices() async {
     if (_warehouseDevices.isNotEmpty) return;
     setState(() => _loadingSpares = true);
-    // Exclude the selected devices themselves
     final selectedSerials = widget.selectedDevices.map((d) => d.serialNumber).toSet();
     final (all, _) = await deviceRepo.getDevices(
       status: 'In Warehouse',
@@ -174,8 +158,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
     });
   }
 
-  // ── On event type changed ─────────────────────────────────────────────────
-
   void _onEventTypeChanged(DeviceEventType? v) {
     setState(() {
       _eventType        = v;
@@ -187,7 +169,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
     });
     if (v != null && _clientRequired.contains(v)) {
       _loadClientDropdowns().then((_) {
-        // For swap: pre-fill client, contract and location from the original device.
         if (v == DeviceEventType.swapDeployment && mounted) {
           _prefillFromOriginal();
         }
@@ -196,41 +177,47 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
     if (v == DeviceEventType.swapDeployment) _loadWarehouseDevices();
   }
 
-  /// Auto-fill client/contract/location from the first selected (original) device.
   void _prefillFromOriginal() {
     if (widget.selectedDevices.isEmpty) return;
     final original = widget.selectedDevices.first;
 
-    // Pre-fill location from the original device's current location
     if (original.currentLocation?.isNotEmpty == true) {
       _locationCtrl.text = original.currentLocation!;
     }
 
-    // Match client by id
+    ClientModel? match;
+
     if (original.clientId?.isNotEmpty == true) {
-      final matchingClient = _clients
-          .where((c) => c.id == original.clientId)
+      match = _clients.where((c) => c.id == original.clientId).firstOrNull;
+    }
+
+    if (match == null && original.clientName?.isNotEmpty == true) {
+      match = _clients.where((c) => c.name == original.clientName).firstOrNull;
+    }
+
+    if (match == null && original.currentLocation?.isNotEmpty == true) {
+      match = _clients
+          .where((c) => c.name == original.currentLocation ||
+                        c.location == original.currentLocation)
           .firstOrNull;
+    }
 
-      if (matchingClient != null) {
-        setState(() => _selectedClient = matchingClient);
+    if (match != null) {
+      setState(() => _selectedClient = match);
 
-        // Match contract — first active contract linked to this device
-        if (original.linkedContractIds.isNotEmpty) {
-          final matchingContract = _contracts
-              .where((c) =>
-                  original.linkedContractIds.contains(c.id) &&
-                  c.clientId == matchingClient.id)
-              .firstOrNull;
-          if (matchingContract != null) {
-            setState(() => _selectedContract = matchingContract);
-          }
+      if (original.linkedContractIds.isNotEmpty) {
+        final matchingContract = _contracts
+            .where((c) =>
+                c.clientId == match!.id &&
+                (original.linkedContractIds.contains(c.id) ||
+                 original.linkedContractIds.contains(c.contractId)))
+            .firstOrNull;
+        if (matchingContract != null) {
+          setState(() => _selectedContract = matchingContract);
         }
       }
     }
   }
-
-  // ── Submit ────────────────────────────────────────────────────────────────
 
   Future<void> _apply() async {
     if (_eventType == null) {
@@ -258,8 +245,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
     String? error;
 
     if (_isSwap) {
-      // For swap: original devices are the selected ones; spare is the warehouse device.
-      // Send spare serial in relatedReference so the backend swap handler can find it.
       error = await deviceRepo.bulkLifecycleEvent(
         serialNumbers:      serials,
         action:             _eventType!.label,
@@ -292,8 +277,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
     Navigator.of(context).pop(true);
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -321,13 +304,11 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Error
                     if (_error != null) ...[
                       _ErrorBanner(message: _error!, textTheme: textTheme),
                       const SizedBox(height: 12),
                     ],
 
-                    // ── Event type ──────────────────────────────────────
                     _Label('Event Configuration', textTheme),
                     const SizedBox(height: 8),
                     if (allowed.isEmpty)
@@ -360,13 +341,10 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
                         onChanged: _onEventTypeChanged,
                       ),
 
-                    // ── Swap: show original (disabled) + spare picker ──
                     if (_isSwap) ...[
                       const SizedBox(height: 16),
                       _Label('Swap Configuration', textTheme),
                       const SizedBox(height: 8),
-
-                      // Original devices — read-only, show all selected
                       _ReadOnlyField(
                         label: 'Original Device${count > 1 ? 's' : ''} (being replaced)',
                         value: widget.selectedDevices
@@ -375,8 +353,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
                         textTheme: textTheme,
                       ),
                       const SizedBox(height: 12),
-
-                      // Spare device picker — In Warehouse only
                       if (_loadingSpares)
                         const Center(child: CircularProgressIndicator())
                       else if (_warehouseDevices.isEmpty)
@@ -409,8 +385,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
                               setState(() => _selectedSpare = v),
                         ),
                     ],
-
-                    // ── Client (deployment / swap) ─────────────────────
                     if (_needsClient) ...[
                       const SizedBox(height: 16),
                       _Label('Client & Contract', textTheme),
@@ -465,8 +439,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
                           ),
                       ],
                     ],
-
-                    // ── Location ───────────────────────────────────────
                     if (_needsLocation) ...[
                       const SizedBox(height: 12),
                       LabelTextField(
@@ -476,8 +448,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
                         prefixIcon: const Icon(Icons.location_on_outlined),
                       ),
                     ],
-
-                    // ── Event details ──────────────────────────────────
                     const SizedBox(height: 20),
                     _Label('Event Details', textTheme),
                     const SizedBox(height: 8),
@@ -519,8 +489,6 @@ class _BulkLifecycleDialogState extends State<BulkLifecycleDialog> {
   }
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-
 class _Header extends StatelessWidget {
   final int count;
   final List<DeviceModel> devices;
@@ -535,7 +503,6 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Show all selected devices' serial + status as a subtitle
     final subtitle = count == 1
         ? '${devices.first.serialNumber} · ${devices.first.status?.value ?? ''}'
         : '$count devices selected';
@@ -549,7 +516,7 @@ class _Header extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.settings_outlined, size: 20),
+            child: Icon(Icons.settings_outlined, size: 20, ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -569,8 +536,6 @@ class _Header extends StatelessWidget {
     );
   }
 }
-
-// ── Footer ────────────────────────────────────────────────────────────────────
 
 class _Footer extends StatelessWidget {
   final bool isLoading;
@@ -623,8 +588,6 @@ class _Footer extends StatelessWidget {
     );
   }
 }
-
-// ── Small helpers ─────────────────────────────────────────────────────────────
 
 class _Label extends StatelessWidget {
   final String text;

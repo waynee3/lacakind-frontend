@@ -48,16 +48,17 @@ class DeviceModel {
 
   factory DeviceModel.fromJson(Map<String, dynamic> json) {
     final rawClient = json['client'];
-    final String? clientId;
-    final String? clientName;
+    String? clientId;
+    String? clientName;
 
     if (rawClient is Map) {
       clientId   = rawClient['id']?.toString() ??
                    rawClient['_id']?.toString();
       clientName = rawClient['name'] as String?;
-    } else {
-      clientId   = rawClient?.toString();
-      clientName = null;
+    } else if (rawClient is String &&
+               rawClient.isNotEmpty &&
+               rawClient != '[object Object]') {
+      clientId = rawClient;
     }
 
     return DeviceModel(
