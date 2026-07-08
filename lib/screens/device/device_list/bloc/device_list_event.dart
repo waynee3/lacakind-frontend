@@ -14,7 +14,7 @@ sealed class DeviceListEvent with _$DeviceListEvent {
   const factory DeviceListEvent.selectDevice(String id) = _SelectedDevice;
   const factory DeviceListEvent.addDevice(Map<String, dynamic> data) = _Added;
   const factory DeviceListEvent.updateDevice(
-    String id,
+    String serialNumber,
     Map<String, dynamic> data,
   ) = _Updated;
   const factory DeviceListEvent.deleteDevice(String id) = _Deleted;
@@ -25,4 +25,3 @@ sealed class DeviceListEvent with _$DeviceListEvent {
     required String fileName,
   }) = _Imported;
 }
- 
